@@ -1,0 +1,296 @@
+﻿@using EPiServer.Framework.Web.Resources
+@using EPiServer.ServiceLocation
+@using EPiServer.Shell.Navigation
+@using Epicweb.Optimizely.RedirectManager
+@using Microsoft.AspNetCore.Http
+@inject RedirectService RedirectService
+@inject RedirectRuleStorage RedirectRuleStorage
+@inject IHttpContextAccessor HttpContextAccessor
+
+@model RedirectManagerViewModel
+@{
+    Layout = null;
+    OnLoad();    
+}
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <title>Redirect manager</title>
+
+        <!-- Shell -->
+        @ClientResources.RenderResources("ShellCore")
+
+        <!-- LightTheme -->
+        @ClientResources.RenderResources("ShellCoreLightTheme")
+
+            <script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+
+    <style>
+        a:visited {
+            color: #fff;
+        }
+    </style> @* override epi style *@
+
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+    <!-- Optional theme -->
+    @*<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">*@
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+    </head>
+
+    <body>
+        @Html.CreatePlatformNavigationMenu()
+
+        <div class="container" @Html.ApplyPlatformNavigation()>        
+
+        @if (!RedirectRuleStorage.TableExist)
+        {
+            <div class="panel panel-danger">
+                <div class="panel-heading">Table @(RedirectRuleStorage.RedirectTableName) does not exist!</div>
+                <div class="panel-body">
+                    <a class="btn btn-danger" href="@(Request.Path)?action=createtable">Create Table @(RedirectRuleStorage.RedirectTableName)</a>
+                </div>
+            </div>
+        }
+
+        <div class="panel @(Request.Query["action"] == "select" ? "panel-info" : "panel-success")">
+            <div class="panel-heading">
+                <b class="panel-title"><a href="#" data-toggle="collapse" data-target="#addPanel">@(Request.Query["action"] == "select" ? "Modify redirect rule" : "Add new redirect rule")</a></b>
+            </div>
+           
+            <div id="addPanel" class="panel-collapse panel-body collapse @(Request.Query["action"] == "select" ? "in" : "out")">
+                @using(Html.BeginForm("create","redirectmanager", new {}, FormMethod.Post, true, new  {@class="form-inline" })){
+                    <input type="hidden" name="action" value="@(Request.Query["action"]=="select" ? "modify" : "add")" />
+                    <input type="hidden" name="id" value="@(Request.Query["id"])" />
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group  form-group-sm">
+                                <label class="lb-sm" for="">Order</label>
+                                <a data-toggle="tooltip" class="tooltipLink" data-original-title="Order of rules">
+                                    <span class="glyphicon glyphicon-info-sign"></span>
+                                </a>
+                                @Html.TextBoxFor(x=>x.SortOrder,new {@type="number",@class="form-control input-sm",@style="width:80px;",@placeholder="1"})
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <div class="form-group  form-group-sm">
+                                <label class="lb-sm" for="">Host</label>
+                                <a data-toggle="tooltip" class="tooltipLink" data-original-title="If Host field is *, the rule affects on all domains.">
+                                    <span class="glyphicon glyphicon-info-sign"></span>
+                                </a>
+                                    @{
+                                        var selectedHost = CurrentRedirect?.Host ?? "*";
+                                        var hostOptions = new[] { "*" }.Concat(RedirectService.GetGlobalHostOptions()).Select(host => new SelectListItem(){ Text = host, Value = host, Selected = selectedHost == host });
+                                        
+                                    }
+
+                                    @Html.DropDownList("host", hostOptions, null, new{ title="Host", name="host", @class="form-control input-sm"})
+
+                            </div>
+                            <div class="form-group  form-group-sm">
+                                <label class="lb-sm" for="">From Url</label>
+                                <a data-toggle="tooltip" class="tooltipLink" data-original-title="Relative address which address or addresses are redirected.">
+                                    <span class="glyphicon glyphicon-info-sign"></span>
+                                </a>
+                                @Html.TextBoxFor(x=>x.FromUrl,new{@class="form-control input-sm",placeholder="/example/redirect"})
+                            </div>
+                            <div class="form-group  form-group-sm">
+                                <label class="lb-sm" for="">Wildcard</label>
+                                <a data-toggle="tooltip" class="tooltipLink" data-original-title="Wildcard allows redirecting all addresses which start with 'From Url' prefix.">
+                                    <span class="glyphicon glyphicon-info-sign"></span>
+                                </a>
+                                @Html.CheckBoxFor(x=>x.WildCard,new {@class="form-control input-sm checkbox",style="width: 17px; height: 17px;"})
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-9">
+                            <div class="form-group  form-group-sm">
+                                <label class="lb-sm" for="">To Url</label>
+                                <a data-toggle="tooltip" class="tooltipLink" data-original-title="Url can be absolute or relative address.">
+                                    <span class="glyphicon glyphicon-info-sign"></span>
+                                </a>
+                                @Html.TextBoxFor(x=>x.ToUrl,new {@class="form-control input-sm",placeholder="/redirect/to"})
+                            </div>
+                            <span style="font-size:9pt">or</span>
+                            <div class="form-group  form-group-sm">
+                                <label class="lb-sm" for="">To Content Id</label>
+                                <a data-toggle="tooltip" class="tooltipLink" data-original-title="Content Id is the Episerver CMS content ID number. If Content Id field is set then the 'To Url' is dismissed.">
+                                    <span class="glyphicon glyphicon-info-sign"></span>
+                                </a>
+                                @Html.TextBoxFor(x=>x.ToConentId,new {@class="form-control input-sm",@type="number",style="width:90px;",placeholder="1"})
+                            </div>
+                            <div class="form-group  form-group-sm">
+                                <label class="lb-sm" for="">Language</label>
+                                    @{
+                                        var selectedLang = CurrentRedirect?.ToContentLang ?? "";
+                                        var languageOptions = new[] { "" }.Concat(RedirectService.GetGlobalLanguageOptions()).Select(lang => new SelectListItem(){ Text = lang, Value = lang, Selected = selectedLang == lang });
+                                    }
+
+                                    @Html.DropDownList("tocontentlang", languageOptions, null, new{ title="language", name="tocontentlang", @class="form-control input-sm"})
+
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-sm @(Request.Query["action"] == "select" ? "btn-info" : "btn-success")">Save</button>
+                            @if (Request.Query["action"] == "select")
+                            {
+                                <a href="@Request.Path" class="btn btn-sm btn-warning">Cancel</a>
+                            }
+                        </div>
+                    </div>
+               }
+            </div>
+        </div>
+
+        <div class="panel panel-danger">
+            <div class="panel-heading">
+                <b class="panel-title"><a href="#" data-toggle="collapse" data-target="#addPanel2">Remove duplicate rules</a></b>
+            </div>
+            <div class="panel-collapse panel-body collapse @(Request.Query["action"] == "dup" ? "in" : "out")" id="addPanel2">
+                @if (!string.IsNullOrEmpty(Request.Query["message"]))
+                {
+                    @Request.Query["message"]
+                }
+                else
+                {
+                <a class="btn btn-danger" href="@(Request.Path)?action=dupl">Remove duplicate rules safely and check for removed urls</a>
+                }
+            </div>
+        </div>
+
+        <div>
+            <table class="table table-condensed table-hover table-sm">
+                <thead>
+                    <tr>
+                        <th>Order</th>
+                        <th>Host</th>
+                        <th>From Url</th>
+                        <th>Wildcard</th>
+                        <th>To Url</th>
+                        <th>To Content Id</th>
+                        <th>Lang</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var result in RedirectService.List())
+                    {
+                        <tr>
+                            <td>@(result.SortOrder)</td>
+                            <td>@(result.Host)</td>
+                            <td><b>@(result.FromUrl)</b></td>
+                            <td><input type="checkbox" class="checkbox input-xs" @(result.Wildcard ? "checked" : null) disabled /></td>
+                            <td><b>@(result.ToUrl)</b></td>
+                            <td><b>@(result.ToContentId)</b></td>
+                            <td>@(result.ToContentLang)</td>
+                            <td>
+                                <a class="btn btn-xs btn-info" href="@($"{Request.Path}?action=select&id={result.Id}")">MODIFY</a>
+                                <a class="btn btn-xs btn-danger" href="@($"{Request.Path}?action=delete&id={result.Id}")" onclick="return confirm('Are you sure you want to delete this item?');">DELETE</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <b class="panel-title"><a href="#" data-toggle="collapse" data-target="#instructionsPanel">Instructions</a></b>
+            </div>
+            <div id="instructionsPanel" class="panel-collapse panel-body collapse">
+                <p>Redirect Manager allows to add, modify and remove <b>permanent redirection rules</b> (alias HTTP 301, Moved Permanently).</p>
+                <p>Rules are redirected in 404 handler, so all the pages and static content overrides these rules.</p>
+                <p>Url addresses are <b>NOT case sensitive</b>. Also the <b>trailing slash (/) in urls' is removed</b> before rule's are applied.</p>
+                <p>Wildcard rules redirect all the addresses that starts with the from url address.</p>
+                <p>Be careful, it's possible to create eternal loop and damage the service.</p>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .lb-sm {
+            font-size: 12px;
+        }
+        .container {
+            padding-top: 60px;
+        }
+        .epi-uif-list-item-text.mdc-list-item__text {
+            font-size: 15px;
+        }
+        .epi-pn-navigation .mdc-top-app-bar__title {
+            font-size: 14px;
+        }
+        
+        .epi-pn-navigation  .mdc-tab {
+            font-size: 14px;
+        }
+        .table-sm {
+            font-size: 12px;
+        }
+        .input-xs {
+            min-height: 10px;
+        }
+        .row{
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+    </style>
+<script type="text/javascript">
+    $("a.tooltipLink").tooltip();
+</script>
+</body>
+</html>
+
+@functions{
+
+    public RedirectRule CurrentRedirect = null;
+    HttpRequest Request = null;
+
+    public void OnLoad()
+    {
+        Request = HttpContextAccessor.HttpContext.Request;
+
+        if (Request.Path == null) return;
+        if (int.TryParse(Request.Query["id"], out int id))
+        {
+            CurrentRedirect = RedirectService.GetRedirect(id);
+            Model.SortOrder = CurrentRedirect?.SortOrder ?? 100;
+            Model.WildCard = CurrentRedirect?.Wildcard ?? false;
+            Model.FromUrl = CurrentRedirect.FromUrl;
+            Model.Id = CurrentRedirect.Id;
+            Model.Action = Request.Query["action"];
+            Model.Host = CurrentRedirect.Host;
+            Model.ToUrl = CurrentRedirect.ToUrl;
+            Model.ToConentId = CurrentRedirect.ToContentId;
+            Model.ToContentLang = CurrentRedirect.ToContentLang;
+        }
+       
+        if (Request.Query["action"] == "delete")
+        {
+            int n = RedirectService.DeleteRedirect(CurrentRedirect.Id);
+            if (n > 0)
+            {
+                 HttpContextAccessor.HttpContext.Response.Redirect(Request.Path);
+            }
+        }
+
+        if (Request.Query["action"] == "dupl")
+        {
+            int cc = RedirectService.CleanupRulesJob();
+             HttpContextAccessor.HttpContext.Response.Redirect(Request.Path + $"?action=dup&message=Removed {cc} rules");            
+        }
+
+        if (Request.Query["action"] == "createtable")
+        {
+            RedirectRuleStorage.CreateTable();
+             HttpContextAccessor.HttpContext.Response.Redirect(Request.Path);
+        }
+
+    }
+
+}
