@@ -8,7 +8,13 @@ namespace Epicweb.Optimizely.RedirectManager
 {
     public static class ServiceCollectionExtension
     {
-        public static void AddRedirectManager(this IServiceCollection services, bool addQuickNavigator = true, bool EnableChangeEvent = true)
+        /// <summary>
+        /// Add Redirect Manager to Optimizely UI
+        /// </summary>
+        /// <param name="services"></param>
+        /// <param name="addQuickNavigator">Enable Quick nav link, default true</param>
+        /// <param name="enableChangeEvent">Enable auto wire up events, default true</param>
+        public static void AddRedirectManager(this IServiceCollection services, bool addQuickNavigator = true, bool enableChangeEvent = true)
         {
             services.AddDbContext<RedirectDbContext>();
             services.AddTransient<RedirectService>();
@@ -23,7 +29,7 @@ namespace Epicweb.Optimizely.RedirectManager
 
             services.AddSingleton<IAuthorizationHandler, RedirectPermissionHandler>();
 
-            RedirectKeeper.Enabled = EnableChangeEvent;
+            RedirectKeeper.Enabled = enableChangeEvent;
 
         }
 
@@ -58,10 +64,6 @@ namespace Epicweb.Optimizely.RedirectManager
                         }
                     }
                 }
-
-                //TODO: Use the following if targeting a version of
-                //.NET Framework older than 4.6:
-                //      return Task.FromResult(0);
                 return Task.CompletedTask;
             }
         }
