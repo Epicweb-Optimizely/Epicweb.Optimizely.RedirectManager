@@ -13,10 +13,10 @@ An Optimizely addon that helps with managements of redirects. Simple but yet so 
 
 # Features
 
-- Easily create redirects to any URLs or to Episerver pages.
+- Easily create redirects to any URLs or to Optimizely CMS pages, products, images and documents.
 - Wild card rules.
 - Reordering and prioritizing rules.
-- Multi-site support.
+- Multi-site and lang support.
 - Allow moving and changing URLs of Optimizely pages and the redirects still works.
 - All redirects are HTTP 301 (Moved permanently), because search engines only follow this kind of redirects.
 - Clean up rules functionality (duplicate rules remover)
@@ -55,6 +55,9 @@ First time, you will be prompted to create the redirect table "SEO_redirect"
 
 ![alt text](https://github.com/Epicweb-Optimizely/Epicweb.Optimizely.RedirectManager/blob/main/preview-create-table.png?raw=true "Click the button the first time")
 
+### Upgraded from .netFramework 4?
+
+That should not be a problem. If you used the Solita solution, change the name of the table to "SEO_redirect", should be the same schema. 
 
 ### Add code to 404 handler
 
@@ -118,7 +121,7 @@ namespace Epicweb.Optimizely.Blog.Features.Error
 }
 ```
 
-## Roles
+## Roles and restrictions
 
 Users with role WebAdmins and RedirectManagers will automatically see the menu in Optimizely CMS
 
