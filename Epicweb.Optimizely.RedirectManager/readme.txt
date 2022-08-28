@@ -1,62 +1,22 @@
 ﻿ONE MORE THING .... 
 
-
 add this code into your error/404 custom page controller
 
 '
-            #region RedirectManager
-            if (statusCode == 404)
-            {
-                string originalRelativePath = HttpContext.Request.GetRawUrl();//get current url
-                string redirectTo = _redirectService.GetPrimaryRedirectUrlOrDefault(SiteDefinition.Current.Name, originalRelativePath);//check if redirect rule exists
-                if (redirectTo != null)
-                {
-                    Response.Redirect(redirectTo, true);
-                }
-            } 
-            #endregion
-
-'
-
-Complete example of ErrorController
-
-'
-using Epicweb.Optimizely.RedirectManager;
-using EPiServer.Web;
-using Microsoft.AspNetCore.Mvc;
-
-namespace Epicweb.Optimizely.Blog.Features.Error
-{
-    public class ErrorController : Controller
+    #region RedirectManager
+    if (statusCode == 404)
     {
-        private readonly IContentRepository _contentRepository;
-        private readonly RedirectService _redirectService;
-
-        public ErrorController(IContentRepository contentRepository, RedirectService redirectService)
+        string originalRelativePath = HttpContext.Request.GetRawUrl();//get current url
+        string redirectTo = _redirectService.GetPrimaryRedirectUrlOrDefault(SiteDefinition.Current.Name, originalRelativePath);//check if redirect rule exists
+        if (redirectTo != null)
         {
-            _contentRepository = contentRepository;
-            _redirectService = redirectService;
-        }
-        [Route("/Error/{statusCode}")]
-        public IActionResult HttpStatusCodeHandler(int statusCode)
-        {
-            ViewBag.Code = statusCode;
-            //this is specific redirectManager
-            #region RedirectManager
-            if (statusCode == 404)
-            {
-                string originalRelativePath = HttpContext.Request.GetRawUrl();//get current url
-                string redirectTo = _redirectService.GetPrimaryRedirectUrlOrDefault(SiteDefinition.Current.Name, originalRelativePath);//check if redirect rule exists
-                if (redirectTo != null)
-                {
-                    Response.Redirect(redirectTo, true);
-                }
-            } 
-            #endregion
-            return View("~/Features/Error/Error.cshtml");
+            Response.Redirect(redirectTo, true);
         }
     }
-}
+    #endregion
+
 '
 
 Happy redirecting! 
+
+Have you looked at this awesome plugin yet? => https://github.com/Epicweb-Optimizely/Epicweb.Optimizely.QuickNavExtension 
