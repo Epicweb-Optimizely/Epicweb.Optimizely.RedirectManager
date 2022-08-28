@@ -28,9 +28,10 @@ An Optimizely addon that helps with managements of redirects. Simple but yet so 
 
 ![alt text](https://github.com/Epicweb-Optimizely/Epicweb.Optimizely.RedirectManager/blob/main/preview-create-table.png?raw=true "Click the button the first time")
 
+![alt text](https://github.com/Epicweb-Optimizely/Epicweb.Optimizely.RedirectManager/blob/main/preview_remove_rules.png?raw=true "Remove duplicate rules or circular references")
+
 ![alt text](https://github.com/Epicweb-Optimizely/Epicweb.Optimizely.RedirectManager/blob/main/preview-QuickNavigation.png?raw=true "Add a quick nav on public site when logged in")
 
-![alt text](https://github.com/Epicweb-Optimizely/Epicweb.Optimizely.RedirectManager/blob/main/preview_remove_rules.png?raw=true "Remove duplicate rules or circular references")
 
 # Installation and configuration 
 
