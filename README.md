@@ -49,6 +49,16 @@ Add to startup.cs
         addQuickNavigator: true, 
         enableChangeEvent: true);
 
+also
+
+    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    {
+        //remember if you use env.IsDevelopment() do activate error pages in dev env too
+        //do NOT use => app.UseStatusCodePagesWithRedirects("/Error/{0}");//not redirects
+        app.UseStatusCodePagesWithReExecute("/Error/{0}");
+        app.UseExceptionHandler("/Error/500");
+    }
+
 Run your application
 
 First time, you will be prompted to create the redirect table "SEO_redirect"
