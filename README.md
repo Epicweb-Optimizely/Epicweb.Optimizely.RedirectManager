@@ -67,7 +67,11 @@ First time, you will be prompted to create the redirect table "SEO_redirect"
 
 ### Upgraded from .netFramework 4?
 
-That should not be a problem. If you used the Solita solution, change the name of the table to "SEO_redirect", should be the same schema. 
+That should not be a problem. If you used the Solita solution, change the name of the table "SOLITA_Redirect" to "SEO_Redirect", should be the same schema if you run on latest solution, make sure you have run this V2 upgrade before, (or added the host column manually) [https://github.com/huilaaja/RedirectManager/blob/c7ec6ea4b12aa36b53b27fa89bb373286fe0d53d/WebProject/Redirects/RedirectService.cs#L282] 
+
+Schema should look like this: 
+
+![image](https://user-images.githubusercontent.com/9716195/231706843-b4b5e9f2-d32f-41d4-9c79-09371f1b105d.png)
 
 ### Add code to 404 handler
 
