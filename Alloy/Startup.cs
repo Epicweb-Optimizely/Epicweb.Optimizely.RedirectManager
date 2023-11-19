@@ -73,6 +73,7 @@ public class Startup
         app.UseEndpoints(endpoints =>
         {
             endpoints.MapContent();
+            endpoints.MapControllers();
         });
     }
 }
