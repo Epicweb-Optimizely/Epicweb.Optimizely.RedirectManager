@@ -43,4 +43,6 @@ also
 '
 Happy redirecting! 
 
-Have you looked at this awesome plugin yet? => https://github.com/Epicweb-Optimizely/Epicweb.Optimizely.QuickNavExtension 
+Have you looked at this awesome plugin yet? => https://github.com/Epicweb-Optimizely/Epicweb.Optimizely.QuickNavExtension
+
+Check out AI-Assistant for Optimizely => https://github.com/Epicweb-Optimizely/Epicweb.Optimizely.AIAssistant
