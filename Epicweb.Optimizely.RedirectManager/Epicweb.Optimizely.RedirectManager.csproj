@@ -3,8 +3,8 @@
   <PropertyGroup>
 	  <TargetFramework>net6.0</TargetFramework>
 	  <Version>6.1.0</Version>
-	  <PackageVersion>6.1.0</PackageVersion>
-	  <AssemblyVersion>6.1.0.0</AssemblyVersion>
+	  <PackageVersion>6.1.1</PackageVersion>
+	  <AssemblyVersion>6.1.1.0</AssemblyVersion>
 	  <PackageId>Epicweb.Optimizely.RedirectManager</PackageId>
 	  <Title>Redirect handler Admin UI integration Optimizely</Title>
 	  <Authors>Luc Gosso</Authors>

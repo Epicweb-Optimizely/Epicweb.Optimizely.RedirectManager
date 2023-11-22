@@ -46,8 +46,8 @@
     </head>
 
     <body>
-        @Html.CreatePlatformNavigationMenu()
-
+    @Html.AntiForgeryToken()
+    @Html.CreatePlatformNavigationMenu()
 
     <div class="outer-container" id="scrollbox" @Html.ApplyPlatformNavigation()>
 
