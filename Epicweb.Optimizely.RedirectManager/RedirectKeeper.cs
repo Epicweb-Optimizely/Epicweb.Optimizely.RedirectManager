@@ -40,7 +40,7 @@ namespace Epicweb.Optimizely.RedirectManager
             if (ContentReference.IsNullOrEmpty(e.ContentLink))
                 return; //new page
 
-            PageData oldPage = GetLastVersion(e.ContentLink.ToPageReference(), (e.Content as ILocalizable).MasterLanguage.TwoLetterISOLanguageName) as PageData;
+            PageData oldPage = GetLastVersion(e.ContentLink.ToPageReference(), (e.Content as ILocalizable).Language.TwoLetterISOLanguageName) as PageData;
 
             if (oldPage != null && oldPage.URLSegment != (e.Content as PageData).URLSegment)
                 LogChange(oldPage, true);
