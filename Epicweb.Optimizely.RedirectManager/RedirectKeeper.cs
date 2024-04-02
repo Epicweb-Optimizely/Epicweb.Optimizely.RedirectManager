@@ -91,18 +91,17 @@ namespace Epicweb.Optimizely.RedirectManager
 
         public static void Page_Deleted(object sender, DeleteContentEventArgs e)
         {
-            using (var context = ServiceLocator.Current.GetInstance<RedirectDbContext>())
+            var context = ServiceLocator.Current.GetInstance<RedirectDbContext>();
+
+            foreach (ContentReference descendent in e.DeletedDescendents)
             {
-                foreach (ContentReference descendent in e.DeletedDescendents)
+                var redirects = context.RedirectRules.Where<RedirectRule>(x => x.ToContentId == descendent.ID).ToList();
+                foreach (var r in redirects)
                 {
-                    var redirects = context.RedirectRules.Where<RedirectRule>(x => x.ToContentId == descendent.ID).ToList();
-                    foreach (var r in redirects)
-                    {
-                        context.RedirectRules.Remove(r);
-                    }
+                    context.RedirectRules.Remove(r);
                 }
-                context.SaveChanges();
             }
+            context.SaveChanges();            
         }
     }
 }

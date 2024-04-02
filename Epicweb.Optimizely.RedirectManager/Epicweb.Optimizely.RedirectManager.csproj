@@ -2,12 +2,12 @@
 
   <PropertyGroup>
 	  <TargetFramework>net6.0</TargetFramework>
-	  <Version>6.2.0</Version>
-	  <PackageVersion>6.2.0</PackageVersion>
-	  <AssemblyVersion>6.2.0.0</AssemblyVersion>
+	  <Version>6.2.1</Version>
+	  <PackageVersion>6.2.1</PackageVersion>
+	  <AssemblyVersion>6.2.1.0</AssemblyVersion>
 	  <PackageId>Epicweb.Optimizely.RedirectManager</PackageId>
 	  <Title>Redirect handler Admin UI integration Optimizely</Title>
-	  <Authors>Luc Gosso</Authors>
+	  <Authors>Luc Gosso, Epicweb</Authors>
 	  <Company>Epicweb</Company>
 	  <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
 	  <PackageProjectUrl>https://github.com/epicweb-optimizely/epicweb.optimizely.redirectmanager</PackageProjectUrl>
