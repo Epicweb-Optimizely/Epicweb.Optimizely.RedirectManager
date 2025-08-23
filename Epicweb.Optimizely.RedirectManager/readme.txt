@@ -28,7 +28,8 @@ using Epicweb.Optimizely.RedirectManager;
 
 services.AddRedirectManager(
     addQuickNavigator: true, 
-    enableChangeEvent: true);
+    enableChangeEvent: true,
+    langParam: RedirectKeeper.LangParam.Name);//if you have complex language setup, change to Name or ThreeLetter, default is TwoLetter
 '
 
 also

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using System.Linq;
 using System.Threading.Tasks;
+using static Epicweb.Optimizely.RedirectManager.RedirectKeeper;
 
 namespace Epicweb.Optimizely.RedirectManager
 {
@@ -14,7 +15,8 @@ namespace Epicweb.Optimizely.RedirectManager
         /// <param name="services"></param>
         /// <param name="addQuickNavigator">Enable Quick nav link, default true</param>
         /// <param name="enableChangeEvent">Enable auto wire up events, default true</param>
-        public static void AddRedirectManager(this IServiceCollection services, bool addQuickNavigator = true, bool enableChangeEvent = true)
+        /// <param name="langParam">If you have complex language setup, change to Name or ThreeLetter</param>
+        public static void AddRedirectManager(this IServiceCollection services, bool addQuickNavigator = true, bool enableChangeEvent = true, LangParam langParam = LangParam.TwoLetter)
         {
             services.AddDbContext<RedirectDbContext>();
             services.AddTransient<RedirectService>();
@@ -30,6 +32,7 @@ namespace Epicweb.Optimizely.RedirectManager
             services.AddSingleton<IAuthorizationHandler, RedirectPermissionHandler>();
 
             RedirectKeeper.Enabled = enableChangeEvent;
+            RedirectKeeper.LangParameter = langParam;
 
         }
 
