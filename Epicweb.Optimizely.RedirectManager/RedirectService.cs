@@ -7,6 +7,8 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
 using System.Web;
+using OfficeOpenXml;
+using System.IO;
 
 namespace Epicweb.Optimizely.RedirectManager
 {
@@ -231,6 +233,122 @@ namespace Epicweb.Optimizely.RedirectManager
             return counter;
         }
 
+        public byte[] ExportToExcel(bool convertToUrl)
+        {
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+            
+            using (var package = new ExcelPackage())
+            {
+                var worksheet = package.Workbook.Worksheets.Add("Redirect Rules");
+                
+                // Add headers
+                worksheet.Cells[1, 1].Value = "Order";
+                worksheet.Cells[1, 2].Value = "Host";
+                worksheet.Cells[1, 3].Value = "From Url";
+                worksheet.Cells[1, 4].Value = "Wildcard";
+                worksheet.Cells[1, 5].Value = "To Url";
+                worksheet.Cells[1, 6].Value = "To Content Id";
+                worksheet.Cells[1, 7].Value = "Language";
+                
+                // Style headers
+                using (var range = worksheet.Cells[1, 1, 1, 7])
+                {
+                    range.Style.Font.Bold = true;
+                    range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                    range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                }
+                
+                var rules = List();
+                int row = 2;
+                
+                foreach (var rule in rules)
+                {
+                    worksheet.Cells[row, 1].Value = rule.SortOrder;
+                    worksheet.Cells[row, 2].Value = rule.Host;
+                    worksheet.Cells[row, 3].Value = rule.FromUrl;
+                    worksheet.Cells[row, 4].Value = rule.Wildcard ? "Yes" : "No";
+                    
+                    if (convertToUrl && rule.ToContentId > 0)
+                    {
+                        try
+                        {
+                            var url = _urlResolver.GetUrl(new ContentReference(rule.ToContentId), rule.ToContentLang);
+                            worksheet.Cells[row, 5].Value = url ?? rule.ToUrl;
+                            worksheet.Cells[row, 6].Value = 0;
+                        }
+                        catch
+                        {
+                            worksheet.Cells[row, 5].Value = rule.ToUrl;
+                            worksheet.Cells[row, 6].Value = rule.ToContentId;
+                        }
+                    }
+                    else
+                    {
+                        worksheet.Cells[row, 5].Value = rule.ToUrl;
+                        worksheet.Cells[row, 6].Value = rule.ToContentId;
+                    }
+                    
+                    worksheet.Cells[row, 7].Value = rule.ToContentLang;
+                    row++;
+                }
+                
+                // Auto-fit columns
+                worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
+                
+                return package.GetAsByteArray();
+            }
+        }
+
+        public byte[] ExportToCsv(bool convertToUrl)
+        {
+            var csv = new System.Text.StringBuilder();
+            
+            // Add headers
+            csv.AppendLine("Order,Host,From Url,Wildcard,To Url,To Content Id,Language");
+            
+            var rules = List();
+            
+            foreach (var rule in rules)
+            {
+                var toUrl = rule.ToUrl;
+                var toContentId = rule.ToContentId;
+                
+                if (convertToUrl && rule.ToContentId > 0)
+                {
+                    try
+                    {
+                        var url = _urlResolver.GetUrl(new ContentReference(rule.ToContentId), rule.ToContentLang);
+                        if (!string.IsNullOrEmpty(url))
+                        {
+                            toUrl = url;
+                            toContentId = 0;
+                        }
+                    }
+                    catch
+                    {
+                        // Keep original values if conversion fails
+                    }
+                }
+                
+                csv.AppendLine($"{rule.SortOrder}," +
+                              $"\"{EscapeCsv(rule.Host)}\"," +
+                              $"\"{EscapeCsv(rule.FromUrl)}\"," +
+                              $"{(rule.Wildcard ? "Yes" : "No")}," +
+                              $"\"{EscapeCsv(toUrl)}\"," +
+                              $"{toContentId}," +
+                              $"\"{EscapeCsv(rule.ToContentLang)}\"");
+            }
+            
+            return System.Text.Encoding.UTF8.GetBytes(csv.ToString());
+        }
+        
+        private string EscapeCsv(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+                return string.Empty;
+                
+            return value.Replace("\"", "\"\"");
+        }
     }
 
     public class RedirectRuleStorage

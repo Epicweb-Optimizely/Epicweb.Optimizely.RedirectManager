@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System;
 
 namespace Epicweb.Optimizely.RedirectManager
 {
@@ -50,6 +51,39 @@ namespace Epicweb.Optimizely.RedirectManager
             { }
 
             return RedirectToAction("Index", "Redirectmanager");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Route("/redirectmanager/export")]
+        public IActionResult Export(string format, bool convertToUrl)
+        {
+            try
+            {
+                byte[] fileBytes;
+                string fileName;
+                string contentType;
+                
+                if (format?.ToLower() == "csv")
+                {
+                    fileBytes = _redirectService.ExportToCsv(convertToUrl);
+                    fileName = $"RedirectRules_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+                    contentType = "text/csv";
+                }
+                else
+                {
+                    fileBytes = _redirectService.ExportToExcel(convertToUrl);
+                    fileName = $"RedirectRules_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+                    contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                }
+                
+                return File(fileBytes, contentType, fileName);
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Export failed: {ex.Message}";
+                return RedirectToAction("Index", "Redirectmanager");
+            }
         }
     }
 }

@@ -175,6 +175,37 @@
                 </div>
             </div>
 
+            <div class="accordion-item panel-primary">
+                <div class="accordion-heading">
+                    <div class="accordion-title"><button type="button" class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#exportPanel" aria-expanded="false" aria-controls="exportPanel">Export Rules</button></div>
+                </div>
+                <div class="accordion-collapse accordion-body collapse" id="exportPanel">
+                    @if (!string.IsNullOrEmpty(TempData["ErrorMessage"]?.ToString()))
+                    {
+                        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+                    }
+                    @using(Html.BeginForm("export","redirectmanager", new {}, FormMethod.Post, true, new  {@class="form-inline" })){
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-check mb-3">
+                                    <input type="checkbox" class="form-check-input" id="convertToUrl" name="convertToUrl" value="true" style="width: 20px; height: 20px;" />
+                                    <label class="form-check-label" for="convertToUrl" style="margin-left: 10px;">
+                                        Convert to Url
+                                        <small class="text-muted d-block">Will export and convert ToContentId to an URL (sets ToContentId to 0 in export)</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <button type="submit" name="format" value="excel" class="btn btn-sm btn-success me-2">Export as Excel</button>
+                                <button type="submit" name="format" value="csv" class="btn btn-sm btn-primary">Export as CSV</button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
         </div>
         <div class="rules pt-3 pb-3">
             <table class="table table-condensed table-hover table-sm">
