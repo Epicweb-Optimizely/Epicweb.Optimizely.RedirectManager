@@ -9,6 +9,7 @@ using System.Linq;
 using System.Web;
 using OfficeOpenXml;
 using System.IO;
+using System.Collections.Generic;
 
 namespace Epicweb.Optimizely.RedirectManager
 {
@@ -349,6 +350,245 @@ namespace Epicweb.Optimizely.RedirectManager
                 
             return value.Replace("\"", "\"\"");
         }
+
+        public ImportResult ImportFromExcel(Stream fileStream, bool removeAllRules)
+        {
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+            var result = new ImportResult();
+            
+            try
+            {
+                if (removeAllRules)
+                {
+                    var existingRules = List();
+                    foreach (var rule in existingRules)
+                    {
+                        DeleteRedirect(rule.Id);
+                        result.DeletedCount++;
+                    }
+                }
+                
+                using (var package = new ExcelPackage(fileStream))
+                {
+                    var worksheet = package.Workbook.Worksheets[0];
+                    int rowCount = worksheet.Dimension?.Rows ?? 0;
+                    
+                    // Start from row 2 (skip header)
+                    for (int row = 2; row <= rowCount; row++)
+                    {
+                        try
+                        {
+                            var sortOrder = int.TryParse(worksheet.Cells[row, 1].Text, out int order) ? order : 0;
+                            var host = worksheet.Cells[row, 2].Text;
+                            var fromUrl = worksheet.Cells[row, 3].Text;
+                            var wildcardText = worksheet.Cells[row, 4].Text;
+                            var wildcard = wildcardText?.ToLower() == "yes" || wildcardText?.ToLower() == "true";
+                            var toUrl = worksheet.Cells[row, 5].Text;
+                            var toContentId = int.TryParse(worksheet.Cells[row, 6].Text, out int contentId) ? contentId : 0;
+                            var toContentLang = worksheet.Cells[row, 7].Text;
+                            
+                            if (string.IsNullOrWhiteSpace(fromUrl))
+                                continue;
+                            
+                            if (!removeAllRules)
+                            {
+                                // Try to find existing rule
+                                var existing = Context.RedirectRules.FirstOrDefault(r => 
+                                    r.FromUrl.ToLower() == fromUrl.ToLower() && 
+                                    (r.Host == host || (string.IsNullOrEmpty(r.Host) && string.IsNullOrEmpty(host))));
+                                
+                                if (existing != null)
+                                {
+                                    // Update existing rule
+                                    ModifyRedirect(existing.Id, sortOrder, host, fromUrl, wildcard, toUrl, toContentId, toContentLang);
+                                    result.UpdatedCount++;
+                                    continue;
+                                }
+                            }
+                            
+                            // Add new rule
+                            AddRedirect(sortOrder, host, fromUrl, wildcard, toUrl, toContentId, toContentLang);
+                            result.AddedCount++;
+                        }
+                        catch (Exception ex)
+                        {
+                            result.Errors.Add($"Row {row}: {ex.Message}");
+                        }
+                    }
+                }
+                
+                result.Success = true;
+            }
+            catch (Exception ex)
+            {
+                result.Success = false;
+                result.Errors.Add($"Import failed: {ex.Message}");
+            }
+            
+            return result;
+        }
+
+        public ImportResult ImportFromCsv(Stream fileStream, bool removeAllRules)
+        {
+            var result = new ImportResult();
+            
+            try
+            {
+                if (removeAllRules)
+                {
+                    var existingRules = List();
+                    foreach (var rule in existingRules)
+                    {
+                        DeleteRedirect(rule.Id);
+                        result.DeletedCount++;
+                    }
+                }
+                
+                using (var reader = new StreamReader(fileStream))
+                {
+                    // Skip header
+                    reader.ReadLine();
+                    
+                    int lineNumber = 1;
+                    while (!reader.EndOfStream)
+                    {
+                        lineNumber++;
+                        var line = reader.ReadLine();
+                        if (string.IsNullOrWhiteSpace(line))
+                            continue;
+                        
+                        try
+                        {
+                            var values = ParseCsvLine(line);
+                            
+                            if (values.Length < 5)
+                            {
+                                result.Errors.Add($"Line {lineNumber}: Invalid format");
+                                continue;
+                            }
+                            
+                            var sortOrder = int.TryParse(values[0], out int order) ? order : 0;
+                            var host = values[1];
+                            var fromUrl = values[2];
+                            var wildcardText = values[3];
+                            var wildcard = wildcardText?.ToLower() == "yes" || wildcardText?.ToLower() == "true";
+                            var toUrl = values.Length > 4 ? values[4] : string.Empty;
+                            var toContentId = values.Length > 5 && int.TryParse(values[5], out int contentId) ? contentId : 0;
+                            var toContentLang = values.Length > 6 ? values[6] : string.Empty;
+                            
+                            if (string.IsNullOrWhiteSpace(fromUrl))
+                                continue;
+                            
+                            if (!removeAllRules)
+                            {
+                                // Try to find existing rule
+                                var existing = Context.RedirectRules.FirstOrDefault(r => 
+                                    r.FromUrl.ToLower() == fromUrl.ToLower() && 
+                                    (r.Host == host || (string.IsNullOrEmpty(r.Host) && string.IsNullOrEmpty(host))));
+                                
+                                if (existing != null)
+                                {
+                                    // Update existing rule
+                                    ModifyRedirect(existing.Id, sortOrder, host, fromUrl, wildcard, toUrl, toContentId, toContentLang);
+                                    result.UpdatedCount++;
+                                    continue;
+                                }
+                            }
+                            
+                            // Add new rule
+                            AddRedirect(sortOrder, host, fromUrl, wildcard, toUrl, toContentId, toContentLang);
+                            result.AddedCount++;
+                        }
+                        catch (Exception ex)
+                        {
+                            result.Errors.Add($"Line {lineNumber}: {ex.Message}");
+                        }
+                    }
+                }
+                
+                result.Success = true;
+            }
+            catch (Exception ex)
+            {
+                result.Success = false;
+                result.Errors.Add($"Import failed: {ex.Message}");
+            }
+            
+            return result;
+        }
+        
+        private string[] ParseCsvLine(string line)
+        {
+            var values = new System.Collections.Generic.List<string>();
+            bool inQuotes = false;
+            var currentValue = new System.Text.StringBuilder();
+            
+            for (int i = 0; i < line.Length; i++)
+            {
+                char c = line[i];
+                
+                if (c == '"')
+                {
+                    if (inQuotes && i + 1 < line.Length && line[i + 1] == '"')
+                    {
+                        // Escaped quote
+                        currentValue.Append('"');
+                        i++;
+                    }
+                    else
+                    {
+                        inQuotes = !inQuotes;
+                    }
+                }
+                else if (c == ',' && !inQuotes)
+                {
+                    values.Add(currentValue.ToString());
+                    currentValue.Clear();
+                }
+                else
+                {
+                    currentValue.Append(c);
+                }
+            }
+            
+            values.Add(currentValue.ToString());
+            return values.ToArray();
+        }
+    }
+
+    public class ImportResult
+    {
+        public bool Success { get; set; }
+        public int AddedCount { get; set; }
+        public int UpdatedCount { get; set; }
+        public int DeletedCount { get; set; }
+        public List<string> Errors { get; set; } = new List<string>();
+        
+        public string GetSummary()
+        {
+            var summary = new System.Text.StringBuilder();
+            
+            if (Success)
+            {
+                summary.Append($"Import completed successfully. ");
+                if (DeletedCount > 0)
+                    summary.Append($"{DeletedCount} existing rules removed. ");
+                summary.Append($"{AddedCount} rules added. ");
+                if (UpdatedCount > 0)
+                    summary.Append($"{UpdatedCount} rules updated. ");
+            }
+            else
+            {
+                summary.Append("Import failed. ");
+            }
+            
+            if (Errors.Count > 0)
+            {
+                summary.Append($"{Errors.Count} errors encountered.");
+            }
+            
+            return summary.ToString();
+        }
     }
 
     public class RedirectRuleStorage
@@ -381,7 +621,7 @@ namespace Epicweb.Optimizely.RedirectManager
                     [SortOrder][int] NOT NULL,
                     [Host][nvarchar](max) NULL,
                     [FromUrl][nvarchar](max) NULL,
-                    [ToUrl][nvarchar](max) NULL,
+                    [ToUrl][nvARCHAR](max) NULL,
                     [ToContentId][int] NOT NULL,
                     [ToContentLang][nvarchar](10) NULL,
                  [Wildcard] [bit] NOT NULL DEFAULT ((0)),

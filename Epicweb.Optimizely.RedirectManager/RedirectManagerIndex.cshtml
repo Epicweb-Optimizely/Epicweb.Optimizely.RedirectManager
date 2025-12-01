@@ -206,6 +206,70 @@
                 </div>
             </div>
 
+            <div class="accordion-item panel-warning">
+                <div class="accordion-heading">
+                    <div class="accordion-title"><button type="button" class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#importPanel" aria-expanded="false" aria-controls="importPanel">Import Rules</button></div>
+                </div>
+                <div class="accordion-collapse accordion-body collapse" id="importPanel">
+                    @if (!string.IsNullOrEmpty(TempData["ImportMessage"]?.ToString()))
+                    {
+                        var messageType = TempData["ImportMessageType"]?.ToString() ?? "info";
+                        <div class="alert alert-@messageType">
+                            @TempData["ImportMessage"]
+                            @if (!string.IsNullOrEmpty(TempData["ImportErrors"]?.ToString()))
+                            {
+                                <hr />
+                                <strong>Errors:</strong>
+                                <div>@Html.Raw(TempData["ImportErrors"])</div>
+                            }
+                        </div>
+                    }
+                    @using(Html.BeginForm("import","redirectmanager", new {}, FormMethod.Post, true, new  {@class="", enctype="multipart/form-data" })){
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="alert alert-info">
+                                    <strong>Instructions:</strong>
+                                    <ul class="mb-0 mt-2">
+                                        <li>Upload an Excel (.xlsx) or CSV (.csv) file with the same format as the export.</li>
+                                        <li>Required columns: Order, Host, From Url, Wildcard, To Url, To Content Id, Language</li>
+                                        <li>Wildcard should be "Yes" or "No"</li>
+                                        <li><strong>Update Mode:</strong> Matches existing rules by "From Url" and "Host", updates them if found, adds new ones if not.</li>
+                                        <li><strong>Replace All Mode:</strong> Deletes all existing rules first, then imports all rules from the file.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <label for="importFile" class="form-label">Select file to import:</label>
+                                    <input type="file" class="form-control" id="importFile" name="importFile" accept=".xlsx,.csv" required />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-check mb-3">
+                                    <input type="checkbox" class="form-check-input" id="removeAllRules" name="removeAllRules" value="true" style="width: 20px; height: 20px;" />
+                                    <label class="form-check-label" for="removeAllRules" style="margin-left: 10px;">
+                                        <span class="text-danger"><strong>Replace All Rules</strong></span>
+                                        <small class="text-muted d-block">
+                                            ⚠️ WARNING: This will delete ALL existing redirect rules before importing. 
+                                            If unchecked, existing rules will be updated where matching, and new rules will be added.
+                                        </small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <button type="submit" class="btn btn-sm btn-warning" onclick="return confirm('Are you sure you want to import these rules?');">Import Rules</button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
         </div>
         <div class="rules pt-3 pb-3">
             <table class="table table-condensed table-hover table-sm">

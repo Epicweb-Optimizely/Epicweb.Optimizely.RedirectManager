@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 using System;
+using System.IO;
 
 namespace Epicweb.Optimizely.RedirectManager
 {
@@ -84,6 +86,72 @@ namespace Epicweb.Optimizely.RedirectManager
                 TempData["ErrorMessage"] = $"Export failed: {ex.Message}";
                 return RedirectToAction("Index", "Redirectmanager");
             }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Route("/redirectmanager/import")]
+        public IActionResult Import(IFormFile importFile, bool removeAllRules)
+        {
+            try
+            {
+                if (importFile == null || importFile.Length == 0)
+                {
+                    TempData["ImportMessage"] = "Please select a file to import.";
+                    TempData["ImportMessageType"] = "danger";
+                    return RedirectToAction("Index", "Redirectmanager");
+                }
+
+                // Check file extension
+                var extension = Path.GetExtension(importFile.FileName).ToLower();
+                if (extension != ".xlsx" && extension != ".csv")
+                {
+                    TempData["ImportMessage"] = "Invalid file format. Please upload an Excel (.xlsx) or CSV (.csv) file.";
+                    TempData["ImportMessageType"] = "danger";
+                    return RedirectToAction("Index", "Redirectmanager");
+                }
+
+                ImportResult result;
+                using (var stream = importFile.OpenReadStream())
+                {
+                    if (extension == ".csv")
+                    {
+                        result = _redirectService.ImportFromCsv(stream, removeAllRules);
+                    }
+                    else
+                    {
+                        result = _redirectService.ImportFromExcel(stream, removeAllRules);
+                    }
+                }
+
+                if (result.Success)
+                {
+                    TempData["ImportMessage"] = result.GetSummary();
+                    TempData["ImportMessageType"] = "success";
+                    
+                    if (result.Errors.Count > 0)
+                    {
+                        TempData["ImportErrors"] = string.Join("<br/>", result.Errors);
+                    }
+                }
+                else
+                {
+                    TempData["ImportMessage"] = result.GetSummary();
+                    TempData["ImportMessageType"] = "danger";
+                    
+                    if (result.Errors.Count > 0)
+                    {
+                        TempData["ImportErrors"] = string.Join("<br/>", result.Errors);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["ImportMessage"] = $"Import failed: {ex.Message}";
+                TempData["ImportMessageType"] = "danger";
+            }
+
+            return RedirectToAction("Index", "Redirectmanager");
         }
     }
 }
