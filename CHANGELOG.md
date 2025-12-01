@@ -6,6 +6,9 @@ All notable changes to this project will be documented in this file.
 
 - add upload of xml/json redirects
 - handling large amounts of rules
+- 
+## [6.3.0]
+- Feature, introducing lang param for complex language setups on AddRedirectManager
 
 ## [6.2.0]
 - Bugfix, segment not changed when not masterlanguage

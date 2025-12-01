@@ -2,12 +2,22 @@
 using EPiServer.Core;
 using EPiServer.ServiceLocation;
 using EPiServer.Web.Routing;
+using System;
+using System.Globalization;
 using System.Linq;
 
 namespace Epicweb.Optimizely.RedirectManager
 {
     public static class RedirectKeeper
     {
+        //enum for two letter, three letter and name
+        public enum LangParam
+        {
+            TwoLetter,
+            ThreeLetter,
+            Name
+        }
+        public static LangParam LangParameter { get; set; } = LangParam.TwoLetter;  
         public static bool Enabled { get; set; } = true;
         public static void Page_Moving(object sender, ContentEventArgs e)
         {
@@ -72,7 +82,7 @@ namespace Epicweb.Optimizely.RedirectManager
         {
             var relativeUrl = ServiceLocator.Current.GetInstance<UrlResolver>().GetUrl(changedPage.ContentLink)?.ToLower();
 
-            if (relativeUrl == null)
+            if (relativeUrl == null)//page with no view might be container page
                 return;
 
             if (relativeUrl.Length > 1 && relativeUrl.Last() == '/')
@@ -85,8 +95,20 @@ namespace Epicweb.Optimizely.RedirectManager
                 wildcard,
                 null,
                 changedPage.PageLink.ID,
-                changedPage.Language.TwoLetterISOLanguageName);
+                GetLangParameter(changedPage.Language));
+            
 
+        }
+
+        private static string GetLangParameter(CultureInfo language)
+        {
+            //Dependeing of how the site is configured we need to add lang parameter to the redirect
+            if (LangParameter == LangParam.ThreeLetter)
+                return language.ThreeLetterISOLanguageName;
+            else if (LangParameter == LangParam.Name)
+                return language.Name;
+            
+            return language.TwoLetterISOLanguageName;
         }
 
         public static void Page_Deleted(object sender, DeleteContentEventArgs e)
