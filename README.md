@@ -19,7 +19,9 @@ An Optimizely addon that helps with managements of redirects. Simple but yet so 
 - Multi-site and lang support.
 - Allow moving and changing URLs of Optimizely pages and the redirects still works.
 - All redirects are HTTP 301 (Moved permanently), because search engines only follow this kind of redirects.
-- Clean up rules functionality (duplicate rules remover)
+- Clean up rules functionality (duplicate rules remover).
+- **Export rules to Excel (.xlsx) or CSV format** - with option to convert Content IDs to URLs.
+- **Import rules from Excel (.xlsx) or CSV files** - with update or replace modes for bulk management.
 - Access restrictions allow usage of rule manager to only administrators or redirectmanagers.
 - And the most important: It's open Source and it's yours to extend and manipulate! 
 
@@ -97,7 +99,7 @@ add this code into your error/404 custom page controller
 
 https://github.com/Epicweb-Optimizely/Epicweb.Optimizely.RedirectManager/tree/main/Alloy/Features/Error
 
-```
+```csharp
 using Epicweb.Optimizely.RedirectManager;
 using EPiServer.Web;
 using Microsoft.AspNetCore.Mvc;
@@ -136,13 +138,50 @@ namespace Epicweb.Optimizely.Blog.Features.Error
 }
 ```
 
+## Export and Import Rules
+
+### Export Rules
+The Redirect Manager now supports exporting all redirect rules to Excel (.xlsx) or CSV format:
+
+- **Export as Excel**: Creates a formatted Excel file with all redirect rules
+- **Export as CSV**: Creates a comma-separated values file for easy editing
+- **Convert to URL option**: Automatically converts Content IDs to their corresponding URLs in the export
+
+**Use cases:**
+- Backup your redirect rules
+- Share rules between environments
+- Bulk edit rules in Excel or other spreadsheet applications
+- Documentation and auditing
+
+### Import Rules
+Import redirect rules from Excel (.xlsx) or CSV files:
+
+- **Update Mode (default)**: Matches existing rules by "From URL" and "Host", updates them if found, adds new ones if not
+- **Replace All Mode**: Deletes all existing rules first, then imports all rules from the file (?? Use with caution)
+
+**File Format:**
+The import file must contain the following columns:
+- Order
+- Host
+- From Url
+- Wildcard (Yes/No)
+- To Url
+- To Content Id
+- Language
+
+**Use cases:**
+- Restore redirect rules from backup
+- Migrate rules between environments
+- Bulk import rules from spreadsheet
+- Update multiple rules at once
+
 ## Roles and restrictions
 
 Users with role WebAdmins and RedirectManagers will automatically see the menu in Optimizely CMS
 
 # Sandbox alloy app
 
-**Get this solution runing**
+**Get this solution running**
 
 1. Clone it
 

@@ -42,6 +42,24 @@ also
         app.UseExceptionHandler("/Error/500");
     }
 '
+======================================
+NEW IN VERSION 6.4.0
+======================================
+
+EXPORT RULES
+- Export all redirect rules to Excel (.xlsx) or CSV format
+- Option to convert Content IDs to URLs during export
+- Perfect for backups, documentation, and sharing between environments
+
+IMPORT RULES
+- Import redirect rules from Excel (.xlsx) or CSV files
+- Two modes: Update existing rules or Replace all (bulk operations)
+- File format: Order, Host, From Url, Wildcard, To Url, To Content Id, Language
+- Detailed error reporting for each row
+- Ideal for bulk updates and environment migrations
+
+======================================
+
 Happy redirecting! 
 
 Have you looked at this awesome plugin yet? => https://github.com/Epicweb-Optimizely/Epicweb.Optimizely.QuickNavExtension

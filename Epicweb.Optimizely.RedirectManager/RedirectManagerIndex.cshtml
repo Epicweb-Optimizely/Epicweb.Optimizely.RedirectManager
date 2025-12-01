@@ -270,9 +270,41 @@
                 </div>
             </div>
 
+            <div class="accordion-item panel-info">
+                <div class="accordion-heading">
+                    <div class="accordion-title"><button type="button" class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#searchPanel" aria-expanded="false" aria-controls="searchPanel">Search Rules</button></div>
+                </div>
+                <div class="accordion-collapse accordion-body collapse" id="searchPanel">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="alert alert-info">
+                                <strong>Search Instructions:</strong>
+                                <p class="mb-0 mt-2">Type in the search box to filter redirect rules. The search will look through From URL, To URL, To Content ID, and Host fields.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-10">
+                            <div class="input-group input-group-sm mb-3">
+                                <span class="input-group-text">Search</span>
+                                <input type="text" class="form-control" id="searchInput" placeholder="Type to search rules..." />
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-sm btn-secondary" id="resetSearchBtn">Reset Search</button>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <p id="searchResults" class="text-muted small mb-0"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
         <div class="rules pt-3 pb-3">
-            <table class="table table-condensed table-hover table-sm">
+            <table class="table table-condensed table-hover table-sm" id="redirectRulesTable">
                 <thead>
                     <tr>
                         <th>Order</th>
@@ -288,7 +320,7 @@
                 <tbody>
                     @foreach (var result in RedirectService.List())
                     {
-                        <tr>
+                        <tr class="rule-row">
                             <td>@(result.SortOrder)</td>
                             <td>@(result.Host)</td>
                             <td><b>@(result.FromUrl)</b></td>
@@ -311,11 +343,45 @@
                     <div class="accordion-title"><button type="button" class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#instructionsPanel" aria-expanded="false" aria-controls="instructionsPanel">Instructions</button></div>
                 </div>
                 <div id="instructionsPanel" class="accordion-collapse accordion-body collapse">
-                    <p>Redirect Manager allows to add, modify and remove <b>permanent redirection rules</b> (alias HTTP 301, Moved Permanently).</p>
-                    <p>Rules are redirected in 404 handler, so all the pages and static content overrides these rules.</p>
-                    <p>Url addresses are <b>NOT case sensitive</b>. Also the <b>trailing slash (/) in urls' is removed</b> before rule's are applied.</p>
-                    <p>Wildcard rules redirect all the addresses that starts with the from url address.</p>
-                    <p>Be careful, it's possible to create eternal loop and damage the service.</p>
+                    <h5>Redirect Rules</h5>
+                    <p>Redirect Manager allows you to add, modify and remove <b>permanent redirection rules</b> (alias HTTP 301, Moved Permanently).</p>
+                    <p>Rules are redirected in 404 handler, so all the pages and static content override these rules.</p>
+                    <p>URL addresses are <b>NOT case sensitive</b>. Also the <b>trailing slash (/) in URLs is removed</b> before rules are applied.</p>
+                    <p>Wildcard rules redirect all the addresses that start with the "From URL" prefix.</p>
+                    <p><b>⚠️ Warning:</b> Be careful, it's possible to create an eternal loop and damage the service.</p>
+                    
+                    <hr class="my-3" />
+                    
+                    <h5>Export Rules</h5>
+                    <p>Export all your redirect rules to Excel (.xlsx) or CSV format:</p>
+                    <ul>
+                        <li><b>Excel Export:</b> Creates a formatted spreadsheet with all rules, perfect for documentation</li>
+                        <li><b>CSV Export:</b> Creates a comma-separated file, easy to edit in any text editor or spreadsheet application</li>
+                        <li><b>Convert to URL:</b> When checked, Content IDs are automatically converted to their corresponding URLs (ToContentId will be set to 0)</li>
+                    </ul>
+                    <p><b>Use cases:</b> Backup rules, share between environments, bulk editing, documentation</p>
+                    
+                    <hr class="my-3" />
+                    
+                    <h5>Import Rules</h5>
+                    <p>Import redirect rules from Excel (.xlsx) or CSV files for bulk operations:</p>
+                    <ul>
+                        <li><b>File Format:</b> Must contain columns: Order, Host, From Url, Wildcard (Yes/No), To Url, To Content Id, Language</li>
+                        <li><b>Update Mode (default):</b> Matches existing rules by "From URL" and "Host", updates if found, adds new ones if not</li>
+                        <li><b>Replace All Mode:</b> ⚠️ Deletes ALL existing rules first, then imports from file - use with extreme caution!</li>
+                        <li><b>Error Handling:</b> Shows detailed error messages for each problematic row</li>
+                    </ul>
+                    <p><b>Use cases:</b> Restore backups, migrate between environments, bulk updates, initial setup</p>
+                    
+                    <hr class="my-3" />
+                    
+                    <h5>Cleanup Rules</h5>
+                    <p>The "Remove duplicate rules" function safely removes:</p>
+                    <ul>
+                        <li>Duplicate redirect rules</li>
+                        <li>Rules pointing to deleted content</li>
+                        <li>Self-referencing rules that could cause loops</li>
+                    </ul>
                 </div>
         </div>
         </div>
@@ -323,6 +389,75 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+    
+    <script>
+        // Search functionality
+        (function() {
+            const searchInput = document.getElementById('searchInput');
+            const resetSearchBtn = document.getElementById('resetSearchBtn');
+            const searchResults = document.getElementById('searchResults');
+            const tableBody = document.querySelector('#redirectRulesTable tbody');
+            const allRows = tableBody.querySelectorAll('.rule-row');
+            const totalRows = allRows.length;
+
+            function performSearch() {
+                const searchTerm = searchInput.value.toLowerCase().trim();
+                let visibleCount = 0;
+
+                allRows.forEach(function(row) {
+                    if (searchTerm === '') {
+                        // Show all rows when search is empty
+                        row.style.display = '';
+                        visibleCount++;
+                    } else {
+                        // Get text content from specific columns
+                        const cells = row.querySelectorAll('td');
+                        const host = cells[1].textContent.toLowerCase();
+                        const fromUrl = cells[2].textContent.toLowerCase();
+                        const toUrl = cells[4].textContent.toLowerCase();
+                        const toContentId = cells[5].textContent.toLowerCase();
+
+                        // Check if any field contains the search term
+                        if (host.includes(searchTerm) || 
+                            fromUrl.includes(searchTerm) || 
+                            toUrl.includes(searchTerm) || 
+                            toContentId.includes(searchTerm)) {
+                            row.style.display = '';
+                            visibleCount++;
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    }
+                });
+
+                // Update results text
+                if (searchTerm === '') {
+                    searchResults.textContent = 'Showing all ' + totalRows + ' rules';
+                } else {
+                    searchResults.textContent = 'Showing ' + visibleCount + ' of ' + totalRows + ' rules';
+                }
+            }
+
+            function resetSearch() {
+                searchInput.value = '';
+                performSearch();
+            }
+
+            // Event listeners
+            if (searchInput) {
+                searchInput.addEventListener('input', performSearch);
+                searchInput.addEventListener('keyup', performSearch);
+            }
+
+            if (resetSearchBtn) {
+                resetSearchBtn.addEventListener('click', resetSearch);
+            }
+
+            // Initialize with all rows visible
+            performSearch();
+        })();
+    </script>
+
     <style>
         .outer-container {
             margin-top: 60px;
