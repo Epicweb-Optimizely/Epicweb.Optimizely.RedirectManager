@@ -65,6 +65,7 @@ IMPORT RULES
 - Search panel for easy access to your redirect rules
 - Excel export and import: Backup and restore redirect rules using Excel files (.xlsx)
 - Convert to URL option: Export with automatic Content ID to URL conversion
+- .net 8 Support
 
 Happy redirecting! 
 
