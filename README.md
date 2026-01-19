@@ -1,11 +1,11 @@
 # Epicweb.Optimizely.RedirectManager
-This .net 6 library contains a RedirectManager and admin user interface integration in an Optimizely CMS 12 and commerce 14 project. Tested with Alloy. 
+This .net 8 library contains a RedirectManager and admin user interface integration in an Optimizely CMS 12 and commerce 14 project. Tested with Alloy. 
 
-[![Platform](https://img.shields.io/badge/Platform-.NET%206-blue.svg?style=flat)](https://msdn.microsoft.com/en-us/library/w0x726c2%28v=vs.110%29.aspx) [![Platform](https://img.shields.io/badge/Optimizely-%2012.24-green.svg?style=flat)](https://world.optimizely.com/products/#contentcloud) [![Twitter Follow](https://img.shields.io/twitter/follow/lucgosso.svg?style=social&label=Follow)](https://twitter.com/lucgosso)
+[![Platform](https://img.shields.io/badge/Platform-.NET%208-blue.svg?style=flat)](https://msdn.microsoft.com/en-us/library/w0x726c2%28v=vs.110%29.aspx) [![Platform](https://img.shields.io/badge/Optimizely-%2012.24-green.svg?style=flat)](https://world.optimizely.com/products/#contentcloud) [![Twitter Follow](https://img.shields.io/twitter/follow/lucgosso.svg?style=social&label=Follow)](https://twitter.com/lucgosso)
 
 An Optimizely addon that helps with managements of redirects. Simple but yet so effective. It is based out of https://github.com/huilaaja/RedirectManager
 
-**This is the .net 6 version of : https://github.com/huilaaja/RedirectManager ** <-- use this for CMS 11
+**This is the .net 8 version of : https://github.com/huilaaja/RedirectManager ** <-- use this for CMS 11
 
 **Preview:**
 
@@ -20,6 +20,9 @@ An Optimizely addon that helps with managements of redirects. Simple but yet so 
 - Allow moving and changing URLs of Optimizely pages and the redirects still works.
 - All redirects are HTTP 301 (Moved permanently), because search engines only follow this kind of redirects.
 - Clean up rules functionality (duplicate rules remover)
+- **Search functionality** - Quickly find redirect rules by searching From Url, To Url, or To Content Id with real-time filtering.
+- **Export rules to Excel** - Export all redirect rules to Excel format with optional URL conversion for Content IDs.
+- **Import rules from Excel** - Import redirect rules from Excel files with update or replace modes.
 - Access restrictions allow usage of rule manager to only administrators or redirectmanagers.
 - And the most important: It's open Source and it's yours to extend and manipulate! 
 
@@ -97,7 +100,7 @@ add this code into your error/404 custom page controller
 
 https://github.com/Epicweb-Optimizely/Epicweb.Optimizely.RedirectManager/tree/main/Alloy/Features/Error
 
-```
+```csharp
 using Epicweb.Optimizely.RedirectManager;
 using EPiServer.Web;
 using Microsoft.AspNetCore.Mvc;
@@ -136,13 +139,62 @@ namespace Epicweb.Optimizely.Blog.Features.Error
 }
 ```
 
+## Export and Import
+
+### Export Redirect Rules
+
+The Redirect Manager includes a powerful export feature that allows you to:
+- Export all redirect rules to an Excel (.xlsx) file
+- **Convert to URL** option: Automatically converts `ToContentId` references to their actual URLs
+  - When enabled, content ID references are resolved to full URLs
+  - The exported `ToContentId` column will be set to 0 for converted entries
+  - Useful when migrating rules between environments or for backup purposes
+
+**Excel Format:**
+The exported file contains the following columns:
+- Order
+- Host
+- From Url
+- Wildcard (Yes/No)
+- To Url
+- To Content Id
+- Language
+
+### Import Redirect Rules
+
+Import redirect rules from Excel (.xlsx) files with two different modes:
+
+**Update Mode (Default):**
+- Existing rules (matched by FromUrl and Host) will be updated with new values
+- Rules not found will be added as new entries
+- Preserves other existing rules that are not in the import file
+
+**Replace Mode (Start from blank):**
+- ?? **Warning:** Deletes ALL existing redirect rules before importing
+- Completely replaces your redirect configuration
+- Use with caution - this action cannot be undone!
+
+**Excel Requirements:**
+- Must include header row with columns: Order, Host, From Url, Wildcard, To Url, To Content Id, Language
+- `From Url` and either `To Url` or `To Content Id` are required
+- Wildcard should be `Yes` or `No`
+- Host can be `*` for all domains or a specific site name
+- Language is optional (for Content ID redirects)
+
+**Import Results:**
+After import, you'll see a summary showing:
+- Number of rules imported (new)
+- Number of rules updated
+- Number of rules skipped (invalid)
+- Number of errors encountered
+
 ## Roles and restrictions
 
 Users with role WebAdmins and RedirectManagers will automatically see the menu in Optimizely CMS
 
 # Sandbox alloy app
 
-**Get this solution runing**
+**Get this solution running**
 
 1. Clone it
 

@@ -1,10 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
   <PropertyGroup>
-	  <TargetFramework>net6.0</TargetFramework>
-	  <Version>6.3.0</Version>
-	  <PackageVersion>6.3.0</PackageVersion>
-	  <AssemblyVersion>6.3.0.0</AssemblyVersion>
+	  <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
+	  <Version>6.4.0</Version>
+	  <PackageVersion>6.4.0</PackageVersion>
+	  <AssemblyVersion>6.4.0.0</AssemblyVersion>
 	  <PackageId>Epicweb.Optimizely.RedirectManager</PackageId>
 	  <Title>Redirect handler Admin UI integration Optimizely</Title>
 	  <Authors>Luc Gosso, Epicweb</Authors>
@@ -19,26 +19,28 @@
 	  <PackageTags>Redirect Redirect handler 404 NotFound Errorhandler Gosso Epicweb addon</PackageTags>
 	  <RepositoryUrl>https://github.com/epicweb-optimizely/epicweb.optimizely.redirectmanager.git</RepositoryUrl>
 	  <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
-	  <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+	  <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	  <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
+	  <!-- Deterministic (dll/exe): Non deterministic -->
+	  <Deterministic>true</Deterministic>
+	  <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="EPiServer.CMS.UI.Core" Version="12.24.0" />
+    <PackageReference Include="EPPlus" Version="6.2.10" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="icon.png">
+    <None Include="icon.png">
       <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
+      <PackagePath>icon.png</PackagePath>
     </None>
-  </ItemGroup>
-	
-  <ItemGroup>
-    <None Update="readme.txt">
+    <None Include="readme.txt">
       <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
+      <PackagePath>readme.txt</PackagePath>
     </None>
   </ItemGroup>
 
