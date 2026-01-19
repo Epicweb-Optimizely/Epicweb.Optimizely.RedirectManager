@@ -2,7 +2,7 @@
 
 We're excited to announce version 6.4 of the Redirect Manager for Optimizely CMS, bringing three powerful new features that make managing your redirect rules easier and more efficient than ever before. Whether you're migrating between environments, performing bulk updates, or simply trying to find that one redirect rule among hundreds, these new features have you covered.
 
-## ?? Search Functionality: Find What You Need, Fast
+## Search Functionality: Find What You Need, Fast
 
 Managing hundreds or even thousands of redirect rules can be overwhelming. The new **Search** feature lets you quickly filter through your rules in real-time, searching across all the important fields:
 
@@ -30,25 +30,21 @@ Perfect for:
 - Auditing rules for a particular section of your site
 - Quickly locating rules that need updating
 
-## ?? Export Rules: Backup and Document with Ease
+## Export Rules: Backup and Document with Ease
 
-Need to document your redirects, share them with your team, or back them up before making changes? The new **Export** feature has you covered with two format options:
+Need to document your redirects, share them with your team, or back them up before making changes? The new **Export** feature creates beautifully formatted Excel spreadsheets with all your redirect rules.
 
 ### Excel Export (.xlsx)
-Creates a beautifully formatted spreadsheet with all your redirect rules. Perfect for:
+Creates a professional, formatted spreadsheet with all your redirect rules. Perfect for:
 - Documentation and reporting
 - Sharing with non-technical stakeholders
 - Creating visual representations of your redirect strategy
-
-### CSV Export (.csv)
-Generates a comma-separated file that's easy to edit in any text editor or spreadsheet application. Ideal for:
-- Quick bulk edits in your favorite editor
-- Integration with other tools and scripts
-- Version control and diffing changes
+- Easy viewing and editing in Excel, Google Sheets, or other spreadsheet applications
+- Backing up your redirect configuration
 
 ### The "Convert to URL" Option
 
-Both export formats support an optional **Convert to URL** checkbox. When enabled:
+The export feature supports an optional **Convert to URL** checkbox. When enabled:
 - Content IDs are automatically resolved to their corresponding URLs
 - The `ToContentId` field is set to 0 in the export
 - You get human-readable URLs instead of numeric IDs
@@ -64,9 +60,9 @@ Order | Host        | From Url      | To Url                | To Content Id
 1     | example.com | /old-product  | /products/new-widget  | 0
 ```
 
-## ?? Import Rules: Bulk Operations Made Simple
+## Import Rules: Bulk Operations Made Simple
 
-The companion to Export, the new **Import** feature enables powerful bulk operations on your redirect rules. Upload Excel (.xlsx) or CSV files to add or update multiple rules at once.
+The companion to Export, the new **Import** feature enables powerful bulk operations on your redirect rules. Upload Excel (.xlsx) files to add or update multiple rules at once.
 
 ### Two Import Modes
 
@@ -82,7 +78,7 @@ This is the recommended mode for most scenarios:
 - Adding new rules from a prepared file
 - Syncing changes between environments
 
-#### 2. Replace All Mode (?? Use with Caution)
+#### 2. Replace All Mode (Use with Caution)
 For complete rule replacement:
 - Deletes ALL existing redirect rules first
 - Then imports all rules from the file
@@ -123,7 +119,7 @@ Errors:
   Line 23: ToUrl and ToContentId both empty
 ```
 
-## ?? Real-World Scenarios
+## Real-World Scenarios
 
 ### Scenario 1: Environment Migration
 You're moving from staging to production:
@@ -134,9 +130,9 @@ You're moving from staging to production:
 
 ### Scenario 2: Bulk URL Updates
 Your product URLs changed from `/products/` to `/shop/`:
-1. **Export** as CSV
-2. Find and replace `/products/` with `/shop/` in a text editor
-3. **Import** back using Update Mode
+1. **Export** as Excel
+2. Open in Excel or Google Sheets and update the URLs
+3. Save and **Import** back using Update Mode
 4. **Search** for "shop" to confirm the changes
 
 ### Scenario 3: Cleanup and Optimization
@@ -154,7 +150,7 @@ Creating documentation for your redirects:
 3. Share with marketing/SEO team
 4. They can request changes without needing CMS access
 
-## ?? Pro Tips
+## Pro Tips
 
 1. **Always Export Before Major Changes**: Create a backup export before using Replace All Mode or making bulk updates.
 
@@ -166,11 +162,10 @@ Creating documentation for your redirects:
 
 5. **Test in Non-Production First**: Try import/export workflows in development or staging environments before production.
 
-## ?? Technical Details
+## Technical Details
 
 ### Supported File Formats
 - **Excel**: .xlsx (Office Open XML)
-- **CSV**: UTF-8 encoded comma-separated values
 
 ### Performance
 - **Search**: Real-time filtering with no server roundtrips
@@ -182,7 +177,7 @@ Creating documentation for your redirects:
 - Import validates file extensions and content
 - Confirmation prompts for destructive operations
 
-## ?? Getting Started
+## Getting Started
 
 The new features are immediately available in Redirect Manager 6.4. To use them:
 
@@ -194,17 +189,18 @@ The new features are immediately available in Redirect Manager 6.4. To use them:
 
 Each panel includes built-in instructions and help text to guide you through the process.
 
-## ?? What's Next?
+## What's Next?
 
 We're committed to making Redirect Manager even better. Some ideas we're exploring:
 - Scheduled exports for automatic backups
+- Bulk delete
+- Delete in search mode
 - Import preview mode
-- Bulk edit directly in the interface
 - Advanced search with regex support
 
 Have suggestions? We'd love to hear them! Visit our [GitHub repository](https://github.com/epicweb-optimizely/epicweb.optimizely.redirectmanager) to share feedback or report issues.
 
-## ?? Acknowledgments
+## Acknowledgments
 
 These features were designed with real-world usage in mind, based on feedback from the Optimizely community. Thank you to everyone who has contributed ideas, bug reports, and feature requests!
 
@@ -217,7 +213,7 @@ Redirect Manager 6.4 introduces three game-changing features:
 | Feature | Purpose | Key Benefit |
 |---------|---------|-------------|
 | **Search** | Find specific rules quickly | Save time when managing many rules |
-| **Export** | Backup and document rules | Excel and CSV formats for flexibility |
+| **Export** | Backup and document rules | Professional Excel format for easy sharing |
 | **Import** | Bulk add or update rules | Efficient environment migration and bulk updates |
 
 Whether you're managing a dozen redirects or thousands, version 6.4 makes your life easier. Update today and experience the difference!
@@ -228,4 +224,4 @@ Whether you're managing a dozen redirects or thousands, version 6.4 makes your l
 **Source Code**: [GitHub](https://github.com/epicweb-optimizely/epicweb.optimizely.redirectmanager)  
 **License**: Apache 2.0
 
-Happy redirecting! ??
+Happy redirecting!

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
   <PropertyGroup>
-	  <TargetFramework>net6.0</TargetFramework>
+	  <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
 	  <Version>6.4.0</Version>
 	  <PackageVersion>6.4.0</PackageVersion>
 	  <AssemblyVersion>6.4.0.0</AssemblyVersion>
@@ -19,7 +19,11 @@
 	  <PackageTags>Redirect Redirect handler 404 NotFound Errorhandler Gosso Epicweb addon</PackageTags>
 	  <RepositoryUrl>https://github.com/epicweb-optimizely/epicweb.optimizely.redirectmanager.git</RepositoryUrl>
 	  <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
-	  <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+	  <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	  <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
+	  <!-- Deterministic (dll/exe): Non deterministic -->
+	  <Deterministic>true</Deterministic>
+	  <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
   </PropertyGroup>
 
   <ItemGroup>
@@ -30,16 +34,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="icon.png">
+    <None Include="icon.png">
       <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
+      <PackagePath>icon.png</PackagePath>
     </None>
-  </ItemGroup>
-	
-  <ItemGroup>
-    <None Update="readme.txt">
+    <None Include="readme.txt">
       <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
+      <PackagePath>readme.txt</PackagePath>
     </None>
   </ItemGroup>
 

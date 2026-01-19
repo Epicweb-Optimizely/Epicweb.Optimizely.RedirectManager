@@ -62,22 +62,9 @@ namespace Epicweb.Optimizely.RedirectManager
         {
             try
             {
-                byte[] fileBytes;
-                string fileName;
-                string contentType;
-                
-                if (format?.ToLower() == "csv")
-                {
-                    fileBytes = _redirectService.ExportToCsv(convertToUrl);
-                    fileName = $"RedirectRules_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
-                    contentType = "text/csv";
-                }
-                else
-                {
-                    fileBytes = _redirectService.ExportToExcel(convertToUrl);
-                    fileName = $"RedirectRules_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
-                    contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-                }
+                byte[] fileBytes = _redirectService.ExportToExcel(convertToUrl);
+                string fileName = $"RedirectRules_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+                string contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
                 
                 return File(fileBytes, contentType, fileName);
             }
@@ -104,9 +91,9 @@ namespace Epicweb.Optimizely.RedirectManager
 
                 // Check file extension
                 var extension = Path.GetExtension(importFile.FileName).ToLower();
-                if (extension != ".xlsx" && extension != ".csv")
+                if (extension != ".xlsx")
                 {
-                    TempData["ImportMessage"] = "Invalid file format. Please upload an Excel (.xlsx) or CSV (.csv) file.";
+                    TempData["ImportMessage"] = "Invalid file format. Please upload an Excel (.xlsx) file.";
                     TempData["ImportMessageType"] = "danger";
                     return RedirectToAction("Index", "Redirectmanager");
                 }
@@ -114,14 +101,7 @@ namespace Epicweb.Optimizely.RedirectManager
                 ImportResult result;
                 using (var stream = importFile.OpenReadStream())
                 {
-                    if (extension == ".csv")
-                    {
-                        result = _redirectService.ImportFromCsv(stream, removeAllRules);
-                    }
-                    else
-                    {
-                        result = _redirectService.ImportFromExcel(stream, removeAllRules);
-                    }
+                    result = _redirectService.ImportFromExcel(stream, removeAllRules);
                 }
 
                 if (result.Success)

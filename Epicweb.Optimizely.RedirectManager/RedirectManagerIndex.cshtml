@@ -187,6 +187,7 @@
                     @using(Html.BeginForm("export","redirectmanager", new {}, FormMethod.Post, true, new  {@class="form-inline" })){
                         <div class="row">
                             <div class="col-md-12">
+                                <p>Export all redirect rules to an Excel file.</p>
                                 <div class="form-check mb-3">
                                     <input type="checkbox" class="form-check-input" id="convertToUrl" name="convertToUrl" value="true" style="width: 20px; height: 20px;" />
                                     <label class="form-check-label" for="convertToUrl" style="margin-left: 10px;">
@@ -198,39 +199,40 @@
                         </div>
                         <div class="row">
                             <div class="col-md-12">
-                                <button type="submit" name="format" value="excel" class="btn btn-sm btn-success me-2">Export as Excel</button>
-                                <button type="submit" name="format" value="csv" class="btn btn-sm btn-primary">Export as CSV</button>
+                                <button type="submit" name="format" value="excel" class="btn btn-sm btn-success">Export as Excel</button>
                             </div>
                         </div>
                     }
                 </div>
             </div>
 
+                @if (!string.IsNullOrEmpty(TempData["ImportMessage"]?.ToString()))
+                {
+                    var messageType = TempData["ImportMessageType"]?.ToString() ?? "info";
+                    <div class="alert alert-@messageType">
+                        @TempData["ImportMessage"]
+                        @if (!string.IsNullOrEmpty(TempData["ImportErrors"]?.ToString()))
+                        {
+                            <hr />
+                            <strong>Errors:</strong>
+                            <div>@Html.Raw(TempData["ImportErrors"])</div>
+                        }
+                    </div>
+                }
+
             <div class="accordion-item panel-warning">
                 <div class="accordion-heading">
                     <div class="accordion-title"><button type="button" class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#importPanel" aria-expanded="false" aria-controls="importPanel">Import Rules</button></div>
                 </div>
                 <div class="accordion-collapse accordion-body collapse" id="importPanel">
-                    @if (!string.IsNullOrEmpty(TempData["ImportMessage"]?.ToString()))
-                    {
-                        var messageType = TempData["ImportMessageType"]?.ToString() ?? "info";
-                        <div class="alert alert-@messageType">
-                            @TempData["ImportMessage"]
-                            @if (!string.IsNullOrEmpty(TempData["ImportErrors"]?.ToString()))
-                            {
-                                <hr />
-                                <strong>Errors:</strong>
-                                <div>@Html.Raw(TempData["ImportErrors"])</div>
-                            }
-                        </div>
-                    }
+
                     @using(Html.BeginForm("import","redirectmanager", new {}, FormMethod.Post, true, new  {@class="", enctype="multipart/form-data" })){
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="alert alert-info">
                                     <strong>Instructions:</strong>
                                     <ul class="mb-0 mt-2">
-                                        <li>Upload an Excel (.xlsx) or CSV (.csv) file with the same format as the export.</li>
+                                        <li>Upload an Excel (.xlsx) file with the same format as the export.</li>
                                         <li>Required columns: Order, Host, From Url, Wildcard, To Url, To Content Id, Language</li>
                                         <li>Wildcard should be "Yes" or "No"</li>
                                         <li><strong>Update Mode:</strong> Matches existing rules by "From Url" and "Host", updates them if found, adds new ones if not.</li>
@@ -243,7 +245,7 @@
                             <div class="col-md-12">
                                 <div class="mb-3">
                                     <label for="importFile" class="form-label">Select file to import:</label>
-                                    <input type="file" class="form-control" id="importFile" name="importFile" accept=".xlsx,.csv" required />
+                                    <input type="file" class="form-control" id="importFile" name="importFile" accept=".xlsx" required />
                                 </div>
                             </div>
                         </div>
@@ -353,10 +355,9 @@
                     <hr class="my-3" />
                     
                     <h5>Export Rules</h5>
-                    <p>Export all your redirect rules to Excel (.xlsx) or CSV format:</p>
+                    <p>Export all your redirect rules to Excel format:</p>
                     <ul>
                         <li><b>Excel Export:</b> Creates a formatted spreadsheet with all rules, perfect for documentation</li>
-                        <li><b>CSV Export:</b> Creates a comma-separated file, easy to edit in any text editor or spreadsheet application</li>
                         <li><b>Convert to URL:</b> When checked, Content IDs are automatically converted to their corresponding URLs (ToContentId will be set to 0)</li>
                     </ul>
                     <p><b>Use cases:</b> Backup rules, share between environments, bulk editing, documentation</p>
@@ -364,7 +365,7 @@
                     <hr class="my-3" />
                     
                     <h5>Import Rules</h5>
-                    <p>Import redirect rules from Excel (.xlsx) or CSV files for bulk operations:</p>
+                    <p>Import redirect rules from Excel (.xlsx) files for bulk operations:</p>
                     <ul>
                         <li><b>File Format:</b> Must contain columns: Order, Host, From Url, Wildcard (Yes/No), To Url, To Content Id, Language</li>
                         <li><b>Update Mode (default):</b> Matches existing rules by "From URL" and "Host", updates if found, adds new ones if not</li>
