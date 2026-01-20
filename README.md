@@ -35,6 +35,8 @@ An Optimizely addon that helps with managements of redirects. Simple but yet so 
 
 ![alt text](https://github.com/Epicweb-Optimizely/Epicweb.Optimizely.RedirectManager/blob/main/preview-QuickNavigation.png?raw=true "Add a quick nav on public site when logged in")
 
+<img width="761" height="398" alt="image" src="https://github.com/user-attachments/assets/aea4b6c7-8735-45ec-97df-9eb88bbd4745" />
+
 
 # Installation and configuration 
 
@@ -159,8 +161,13 @@ The exported file contains the following columns:
 - To Url
 - To Content Id
 - Language
+  
+<img width="734" height="284" alt="image" src="https://github.com/user-attachments/assets/78539532-791a-468d-b066-10da1d3dd899" />
+
 
 ### Import Redirect Rules
+
+<img width="737" height="717" alt="image" src="https://github.com/user-attachments/assets/8105b273-a0a5-4ad0-8be1-364a1c89d32a" />
 
 Import redirect rules from Excel (.xlsx) files with two different modes:
 
