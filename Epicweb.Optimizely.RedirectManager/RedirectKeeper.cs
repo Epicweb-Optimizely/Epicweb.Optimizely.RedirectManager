@@ -1,4 +1,5 @@
 ﻿using EPiServer;
+using EPiServer.Applications;
 using EPiServer.Core;
 using EPiServer.ServiceLocation;
 using EPiServer.Web.Routing;
@@ -17,61 +18,75 @@ namespace Epicweb.Optimizely.RedirectManager
             ThreeLetter,
             Name
         }
-        public static LangParam LangParameter { get; set; } = LangParam.TwoLetter;  
+
+        public static LangParam LangParameter { get; set; } = LangParam.TwoLetter;
         public static bool Enabled { get; set; } = true;
+
         public static void Page_Moving(object sender, ContentEventArgs e)
         {
-            if (Enabled)
+            if (!Enabled || e?.Content is not PageData page)
             {
-                if (!(e.Content is PageData))
-                    return;
+                return;
+            }
 
-                var contentLoader = ServiceLocator.Current.GetInstance<IContentRepository>();
+            var contentLoader = ServiceLocator.Current.GetInstance<IContentRepository>();
 
-                if (e.TargetLink == ContentReference.WasteBasket || contentLoader.Get<PageData>(e.ContentLink.ToPageReference()).IsDeleted)
-                    return;
+            if (e.TargetLink == ContentReference.WasteBasket || contentLoader.Get<PageData>(e.ContentLink).IsDeleted)
+            {
+                return;
+            }
 
-                var pages = contentLoader.GetLanguageBranches<PageData>(e.ContentLink.ToPageReference());
+            var pages = contentLoader.GetLanguageBranches<PageData>(e.ContentLink);
 
-                foreach (PageData page in pages)
+            foreach (PageData pageInLanguage in pages)
+            {
+                if (ContentReference.IsNullOrEmpty(pageInLanguage.ArchiveLink))
                 {
-                    if (ContentReference.IsNullOrEmpty(page.ArchiveLink)) //skip redirect if archived
-                        LogChange(page, true);
+                    LogChange(pageInLanguage, true);
                 }
             }
         }
 
         public static void UrlSegment_Changed(object sender, ContentEventArgs e)
         {
-
-            if (!(e.Content is PageData))
+            if (e?.Content is not PageData pageData || ContentReference.IsNullOrEmpty(e.ContentLink))
+            {
                 return;
+            }
 
-            if (ContentReference.IsNullOrEmpty(e.ContentLink))
-                return; //new page
+            var previousPage = GetLastVersion(e.ContentLink, pageData.Language?.TwoLetterISOLanguageName ?? string.Empty) as PageData;
 
-            PageData oldPage = GetLastVersion(e.ContentLink.ToPageReference(), (e.Content as ILocalizable).Language.TwoLetterISOLanguageName) as PageData;
-
-            if (oldPage != null && oldPage.URLSegment != (e.Content as PageData).URLSegment)
-                LogChange(oldPage, true);
+            if (previousPage != null && previousPage.URLSegment != pageData.URLSegment)
+            {
+                LogChange(previousPage, true);
+            }
         }
 
-        public static IContent GetLastVersion(PageReference reference, string lang)
+        public static IContent? GetLastVersion(ContentReference reference, string lang)
         {
+            if (ContentReference.IsNullOrEmpty(reference))
+            {
+                return null;
+            }
+
             var versionRepository = ServiceLocator.Current.GetInstance<IContentVersionRepository>();
             var contentRepository = ServiceLocator.Current.GetInstance<IContentRepository>();
 
-            var versions = versionRepository.List(reference);
+            var versions = versionRepository.List(reference).ToList();
+
+            if (versions.Count <= 1)
+            {
+                return null;
+            }
+
             var lastVersion = versions
                 .OrderBy(v => v.Saved)
-                .Take(versions.Count() - 1)
+                .Take(versions.Count - 1)
                 .OrderByDescending(v => v.Saved)
-                .FirstOrDefault(version => version.LanguageBranch == lang);
+                .FirstOrDefault(version => string.Equals(version.LanguageBranch, lang, StringComparison.OrdinalIgnoreCase));
 
             if (lastVersion == null)
             {
-                //var msg = string.Format("Unable to find last version for ContentReference '{0}'.", reference.ID);
-                //throw new Exception(msg);
                 return null;
             }
 
@@ -80,34 +95,58 @@ namespace Epicweb.Optimizely.RedirectManager
 
         private static void LogChange(PageData changedPage, bool wildcard = false)
         {
-            var relativeUrl = ServiceLocator.Current.GetInstance<UrlResolver>().GetUrl(changedPage.ContentLink)?.ToLower();
-
-            if (relativeUrl == null)//page with no view might be container page
+            if (changedPage == null)
+            {
                 return;
+            }
+
+            var relativeUrl = ServiceLocator.Current.GetInstance<UrlResolver>().GetUrl(changedPage.ContentLink)?.ToLowerInvariant();
+
+            if (string.IsNullOrWhiteSpace(relativeUrl))
+            {
+                return;
+            }
 
             if (relativeUrl.Length > 1 && relativeUrl.Last() == '/')
+            {
                 relativeUrl = relativeUrl.Remove(relativeUrl.Length - 1);
+            }
 
             var redirectService = ServiceLocator.Current.GetInstance<RedirectService>();
-            redirectService.AddRedirect(10000,
-                EPiServer.Web.SiteDefinition.Current.Name.ToLower(),
+            var hostName = GetApplicationName();
+
+            redirectService.AddRedirect(
+                10000,
+                hostName,
                 relativeUrl,
                 wildcard,
                 null,
-                changedPage.PageLink.ID,
+                changedPage.ContentLink.ID,
                 GetLangParameter(changedPage.Language));
-            
+        }
 
+        private static string GetApplicationName()
+        {
+            var applicationResolver = ServiceLocator.Current.GetInstance<IApplicationResolver>();
+            var application = applicationResolver.GetByContext();
+
+            return application?.Name?.Trim().ToLowerInvariant() ?? string.Empty;
         }
 
         private static string GetLangParameter(CultureInfo language)
         {
-            //Dependeing of how the site is configured we need to add lang parameter to the redirect
+            ArgumentNullException.ThrowIfNull(language);
+
             if (LangParameter == LangParam.ThreeLetter)
+            {
                 return language.ThreeLetterISOLanguageName;
-            else if (LangParameter == LangParam.Name)
+            }
+
+            if (LangParameter == LangParam.Name)
+            {
                 return language.Name;
-            
+            }
+
             return language.TwoLetterISOLanguageName;
         }
 
@@ -117,13 +156,14 @@ namespace Epicweb.Optimizely.RedirectManager
 
             foreach (ContentReference descendent in e.DeletedDescendents)
             {
-                var redirects = context.RedirectRules.Where<RedirectRule>(x => x.ToContentId == descendent.ID).ToList();
+                var redirects = context.RedirectRules.Where(x => x.ToContentId == descendent.ID).ToList();
                 foreach (var r in redirects)
                 {
                     context.RedirectRules.Remove(r);
                 }
             }
-            context.SaveChanges();            
+
+            context.SaveChanges();
         }
     }
 }

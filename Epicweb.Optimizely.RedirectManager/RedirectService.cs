@@ -1,15 +1,16 @@
 ﻿using EPiServer;
+using EPiServer.Applications;
 using EPiServer.Core;
 using EPiServer.Web;
 using EPiServer.Web.Routing;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using OfficeOpenXml;
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Web;
-using OfficeOpenXml;
-using System.IO;
-using System.Collections.Generic;
 
 namespace Epicweb.Optimizely.RedirectManager
 {
@@ -17,16 +18,16 @@ namespace Epicweb.Optimizely.RedirectManager
     {
         private readonly UrlResolver _urlResolver;
         private readonly IContentRepository _contentRepository;
-        private readonly ISiteDefinitionRepository _siteDefinitionRepository;
+        private readonly IApplicationRepository applicationRepository;
         private readonly RedirectRuleStorage RedirectRuleStorage;
         private readonly RedirectDbContext Context;
-        public RedirectService(UrlResolver urlResolver, IContentRepository contentRepository, ISiteDefinitionRepository siteDefinitionRepository,
+        public RedirectService(UrlResolver urlResolver, IContentRepository contentRepository, IApplicationRepository applicationRepository,
             RedirectRuleStorage redirectStorage,
             RedirectDbContext _context)
         {
             _urlResolver = urlResolver;
             _contentRepository = contentRepository;
-            _siteDefinitionRepository = siteDefinitionRepository;
+            this.applicationRepository = applicationRepository;
             RedirectRuleStorage = redirectStorage;
             RedirectRuleStorage.Init();
             Context = _context;
@@ -150,7 +151,7 @@ namespace Epicweb.Optimizely.RedirectManager
 
         public string[] GetGlobalHostOptions()
         {
-            return _siteDefinitionRepository.List()
+            return applicationRepository.List()
                                             .Select(h => h.Name.ToLower())
                                             .Where(h => !h.Equals("*", StringComparison.InvariantCultureIgnoreCase))
                                             .OrderBy(h => h)
@@ -236,8 +237,8 @@ namespace Epicweb.Optimizely.RedirectManager
 
         public byte[] ExportToExcel(bool convertToUrl)
         {
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-            
+            ExcelPackage.License.SetNonCommercialOrganization("RedirectManager OpenSource Project"); //This will also set the Company property to the organization name provided in the argument. https://epplussoftware.com/en/Home/GettingStartedCommunityLicense
+
             using (var package = new ExcelPackage())
             {
                 var worksheet = package.Workbook.Worksheets.Add("Redirect Rules");
@@ -302,7 +303,7 @@ namespace Epicweb.Optimizely.RedirectManager
 
         public ImportResult ImportFromExcel(Stream fileStream, bool removeAllRules)
         {
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+            ExcelPackage.License.SetNonCommercialOrganization("RedirectManager OpenSource Project"); //This will also set the Company property to the organization name provided in the argument. https://epplussoftware.com/en/Home/GettingStartedCommunityLicense
             var result = new ImportResult();
             
             try

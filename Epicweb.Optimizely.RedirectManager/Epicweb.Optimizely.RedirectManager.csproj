@@ -1,10 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
   <PropertyGroup>
-	  <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
-	  <Version>6.4.0</Version>
-	  <PackageVersion>6.4.0</PackageVersion>
-	  <AssemblyVersion>6.4.0.0</AssemblyVersion>
+	  <TargetFrameworks>net10.0</TargetFrameworks>
+	  <Version>7.0.0</Version>
+	  <PackageVersion>7.0.0</PackageVersion>
+	  <AssemblyVersion>7.0.0.0</AssemblyVersion>
 	  <PackageId>Epicweb.Optimizely.RedirectManager</PackageId>
 	  <Title>Redirect handler Admin UI integration Optimizely</Title>
 	  <Authors>Luc Gosso, Epicweb</Authors>
@@ -27,10 +27,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="EPiServer.CMS.UI.Core" Version="12.24.0" />
-    <PackageReference Include="EPPlus" Version="6.2.10" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.0" />
+    <PackageReference Include="EPiServer.CMS.UI.Core" Version="13.1.1" />
+    <PackageReference Include="EPPlus" Version="8.6.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.10" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.10" />
   </ItemGroup>
 
   <ItemGroup>
