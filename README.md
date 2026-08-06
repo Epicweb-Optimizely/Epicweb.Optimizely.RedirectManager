@@ -1,11 +1,13 @@
 # Epicweb.Optimizely.RedirectManager
-This .net 8 library contains a RedirectManager and admin user interface integration in an Optimizely CMS 12 and commerce 14 project. Tested with Alloy. 
+This .NET 10 library contains a RedirectManager and admin user interface integration for Optimizely CMS 13 (and Commerce 14). If you are running Optimizely CMS 12, use package version 6.x instead.
 
-[![Platform](https://img.shields.io/badge/Platform-.NET%208-blue.svg?style=flat)](https://msdn.microsoft.com/en-us/library/w0x726c2%28v=vs.110%29.aspx) [![Platform](https://img.shields.io/badge/Optimizely-%2012.24-green.svg?style=flat)](https://world.optimizely.com/products/#contentcloud) [![Twitter Follow](https://img.shields.io/twitter/follow/lucgosso.svg?style=social&label=Follow)](https://twitter.com/lucgosso)
+[![Platform](https://img.shields.io/badge/Platform-.NET%2010-blue.svg?style=flat)](https://learn.microsoft.com/dotnet/) [![Platform](https://img.shields.io/badge/Optimizely-%2013.1-green.svg?style=flat)](https://world.optimizely.com/products/#contentcloud) [![Twitter Follow](https://img.shields.io/twitter/follow/lucgosso.svg?style=social&label=Follow)](https://twitter.com/lucgosso)
 
-An Optimizely addon that helps with managements of redirects. Simple but yet so effective. It is based out of https://github.com/huilaaja/RedirectManager
+An Optimizely addon that helps with management of redirects. Simple but yet so effective. It is based on https://github.com/huilaaja/RedirectManager
 
-**This is the .net 8 version of : https://github.com/huilaaja/RedirectManager ** <-- use this for CMS 11
+**This is the CMS 13 / .NET 10 version of https://github.com/huilaaja/RedirectManager**
+
+**For CMS 12, use version 6.x.**
 
 **Preview:**
 
@@ -24,7 +26,7 @@ An Optimizely addon that helps with managements of redirects. Simple but yet so 
 - **Export rules to Excel** - Export all redirect rules to Excel format with optional URL conversion for Content IDs.
 - **Import rules from Excel** - Import redirect rules from Excel files with update or replace modes.
 - Access restrictions allow usage of rule manager to only administrators or redirectmanagers.
-- And the most important: It's open Source and it's yours to extend and manipulate! 
+- And the most important: It's open Source and it's yours to extend and manipulate!
 
 
 **Preview:**
@@ -36,7 +38,7 @@ An Optimizely addon that helps with managements of redirects. Simple but yet so 
 ![alt text](https://github.com/Epicweb-Optimizely/Epicweb.Optimizely.RedirectManager/blob/main/preview-QuickNavigation.png?raw=true "Add a quick nav on public site when logged in")
 
 
-# Installation and configuration 
+# Installation and configuration
 
 Available on nuget.optimizely.com https://nuget.optimizely.com/package/?id=Epicweb.Optimizely.RedirectManager
 
@@ -71,9 +73,9 @@ First time, you will be prompted to create the redirect table "SEO_redirect"
 
 ### Upgraded from .netFramework 4?
 
-That should not be a problem. If you used the Solita solution, change the name of the table "SOLITA_Redirect" to "SEO_Redirect", should be the same schema if you run on latest solution, make sure you have run this V2 upgrade before, (or added the host column manually) [https://github.com/huilaaja/RedirectManager/blob/c7ec6ea4b12aa36b53b27fa89bb373286fe0d53d/WebProject/Redirects/RedirectService.cs#L282] 
+That should not be a problem. If you used the Solita solution, change the name of the table "SOLITA_Redirect" to "SEO_Redirect", should be the same schema if you run on latest solution, make sure you have run this V2 upgrade before, (or added the host column manually) [https://github.com/huilaaja/RedirectManager/blob/c7ec6ea4b12aa36b53b27fa89bb373286fe0d53d/WebProject/Redirects/RedirectService.cs#L282]
 
-Schema should look like this: 
+Schema should look like this:
 
 ![image](https://user-images.githubusercontent.com/9716195/231706843-b4b5e9f2-d32f-41d4-9c79-09371f1b105d.png)
 
@@ -85,8 +87,10 @@ add this code into your error/404 custom page controller
             #region RedirectManager
             if (statusCode == 404)
             {
+                //var applicationResolver = ServiceLocator.Current.GetInstance<IApplicationResolver>();
+                var applicationName = applicationResolver.GetByContext().Name?.ToLower() ?? "*";
                 string originalRelativePath = HttpContext.Request.GetRawUrl();//get current url
-                string redirectTo = _redirectService.GetPrimaryRedirectUrlOrDefault(SiteDefinition.Current.Name, originalRelativePath);//check if redirect rule exists
+                string redirectTo = _redirectService.GetPrimaryRedirectUrlOrDefault(applicationName, originalRelativePath);//check if redirect rule exists
                 if (redirectTo != null)
                 {
                     Response.Redirect(redirectTo, true);
@@ -111,11 +115,13 @@ namespace Epicweb.Optimizely.Blog.Features.Error
     {
         private readonly IContentRepository _contentRepository;
         private readonly RedirectService _redirectService;
+        private readonly IApplicationResolver applicationResolver;
 
-        public ErrorController(IContentRepository contentRepository, RedirectService redirectService)
+        public ErrorController(IContentRepository contentRepository, RedirectService redirectService, IApplicationResolver applicationResolver)
         {
             _contentRepository = contentRepository;
             _redirectService = redirectService;
+            this.applicationResolver = applicationResolver;
         }
         [Route("/Error/{statusCode}")]
         public IActionResult HttpStatusCodeHandler(int statusCode)
@@ -125,8 +131,9 @@ namespace Epicweb.Optimizely.Blog.Features.Error
             #region RedirectManager
             if (statusCode == 404)
             {
+                var applicationName = applicationResolver.GetByContext().Name?.ToLower() ?? "*";
                 string originalRelativePath = HttpContext.Request.GetRawUrl();//get current url
-                string redirectTo = _redirectService.GetPrimaryRedirectUrlOrDefault(SiteDefinition.Current.Name, originalRelativePath);//check if redirect rule exists
+                string redirectTo = _redirectService.GetPrimaryRedirectUrlOrDefault(applicationName, originalRelativePath);//check if redirect rule exists
                 if (redirectTo != null)
                 {
                     Response.Redirect(redirectTo, true);
@@ -198,11 +205,13 @@ Users with role WebAdmins and RedirectManagers will automatically see the menu i
 
 1. Clone it
 
-2. Unpack the /alloy/app_data/blobs-and-database.zip
+2. Create a empty database and update connection string in appsettings.json
 
-3. dotnet run
+3. Make sure the DefaultSiteContent.episerverdata is in app_data folder
 
-4. log in to CMS with "admin" and "Test1234!"
+4. dotnet run
+
+5. register an admin user to login
 
 # Package maintainer
 

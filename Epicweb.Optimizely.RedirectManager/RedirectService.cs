@@ -237,7 +237,7 @@ namespace Epicweb.Optimizely.RedirectManager
 
         public byte[] ExportToExcel(bool convertToUrl)
         {
-            ExcelPackage.License.SetNonCommercialOrganization("RedirectManager OpenSource Project"); //This will also set the Company property to the organization name provided in the argument. https://epplussoftware.com/en/Home/GettingStartedCommunityLicense
+            ExcelPackage.License.SetNonCommercialOrganization("RedirectManager OpenSource Project"); //https://epplussoftware.com/en/Home/GettingStartedCommunityLicense
 
             using (var package = new ExcelPackage())
             {
@@ -303,7 +303,7 @@ namespace Epicweb.Optimizely.RedirectManager
 
         public ImportResult ImportFromExcel(Stream fileStream, bool removeAllRules)
         {
-            ExcelPackage.License.SetNonCommercialOrganization("RedirectManager OpenSource Project"); //This will also set the Company property to the organization name provided in the argument. https://epplussoftware.com/en/Home/GettingStartedCommunityLicense
+            ExcelPackage.License.SetNonCommercialOrganization("RedirectManager OpenSource Project"); //https://epplussoftware.com/en/Home/GettingStartedCommunityLicense
             var result = new ImportResult();
             
             try

@@ -1,7 +1,7 @@
 ONE MORE THING .... 
 
 add this code into your error/404 custom page controller
-full example here: https://github.com/Epicweb-Optimizely/Epicweb.Optimizely.RedirectManager/tree/main/Alloy/Features/Error 
+full example here: https://github.com/Epicweb-Optimizely/Epicweb.Optimizely.RedirectManager/tree/main/CMS13/Features/Error 
 
 '
 
@@ -10,8 +10,10 @@ using Epicweb.Optimizely.RedirectManager;
     #region RedirectManager
     if (statusCode == 404)
     {
+        //var applicationResolver = ServiceLocator.Current.GetInstance<IApplicationResolver>();
+        var applicationName = applicationResolver.GetByContext().Name?.ToLower() ?? "*";
         string originalRelativePath = HttpContext.Request.GetRawUrl();//get current url
-        string redirectTo = _redirectService.GetPrimaryRedirectUrlOrDefault(SiteDefinition.Current.Name, originalRelativePath);//check if redirect rule exists
+        string redirectTo = _redirectService.GetPrimaryRedirectUrlOrDefault(applicationName, originalRelativePath);//check if redirect rule exists
         if (redirectTo != null)
         {
             Response.Redirect(redirectTo, true);
@@ -42,6 +44,21 @@ also
         app.UseExceptionHandler("/Error/500");
     }
 '
+======================================
+CMS 13 / .NET 10 PACKAGE
+======================================
+
+This package version targets Optimizely CMS 13 and .NET 10.
+If you are running Optimizely CMS 12, use package version 6.x instead.
+
+======================================
+NEW IN VERSION 7.0.0
+======================================
+
+- CMS 13 / .NET 10 support
+- Updated admin UI experience for CMS 13 compatibility
+- Improved shell resource and navigation support
+
 ======================================
 NEW IN VERSION 6.4.0
 ======================================
