@@ -1,8 +1,10 @@
-﻿@using EPiServer.Framework.Web.Resources
-@using EPiServer.ServiceLocation
-@using EPiServer.Shell.Navigation
+﻿@using EPiServer.Framework.Web.Mvc.Html
+@using EPiServer.Framework.Web.Resources
+@using EPiServer.Shell.UI
 @using Epicweb.Optimizely.RedirectManager
 @using Microsoft.AspNetCore.Http
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@addTagHelper *, EPiServer.Shell.UI
 @inject RedirectService RedirectService
 @inject RedirectRuleStorage RedirectRuleStorage
 @inject IHttpContextAccessor HttpContextAccessor
@@ -10,395 +12,492 @@
 @model RedirectManagerViewModel
 @{
     Layout = null;
-    OnLoad();    
+    OnLoad();
 }
 
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta http-equiv="x-ua-compatible" content="ie=edge">
-        <title>Redirect manager</title>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge" />
+    <title>Redirect manager</title>
 
-        <!-- Shell -->
-        @ClientResources.RenderResources("ShellCore")
+    @Html.RequiredClientResources("Header")
 
-        <!-- LightTheme -->
-        @ClientResources.RenderResources("ShellCoreLightTheme")
+    @ClientResources.RenderResources("ShellCore")
+    @ClientResources.RenderResources("ShellCoreLightTheme")
 
-    <script>
-        function resizeIframe(obj) {
-            obj.style.height = 0;
-            const newHeight = Math.max(document.body.clientHeight, document.documentElement.clientHeight);
-            obj.style.height = newHeight + 'px';
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+
+    <style>
+        html, body {
+            min-height: 100%;
+            margin: 0;
+            overflow-x: hidden;
+            overflow-y: auto;
         }
 
-        window.addEventListener('DOMContentLoaded', (event) => {
-            const containerIframe = document.getElementById('scrollbox');
-            resizeIframe(containerIframe);
-            window.addEventListener("resize", () => resizeIframe(containerIframe));
-        });
-    </script>
+        body {
+            background: #fff;
+            font-family: var(--mdc-typography-font-family, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+        }
 
-    <!-- Latest compiled and minified CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-    </head>
+        .redirect-admin-page {
+            padding: 56px 16px 16px 16px;
+            background: #fff;
+            min-height: 100vh;
+            overflow: visible;
+            width: stretch;
+        }
 
-    <body>
-    @Html.AntiForgeryToken()
-    @Html.CreatePlatformNavigationMenu()
+        .redirect-admin-container {
+            width: 100%;
+            max-width: none;
+            margin: 0;
+            padding: 0 16px;
+            box-sizing: border-box;
+        }
 
-    <div class="outer-container" id="scrollbox" @Html.ApplyPlatformNavigation()>
+        .redirect-admin-content {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding-top: 56px;
+            padding-left: 0;
+            padding-right: 0;
+            box-sizing: border-box;
+        }
 
-        <div class="container">
+        .accordion {
+            width: 100%;
+            max-width: none;
+            margin: 0;
+        }
 
-        <div class="accordion">
+        .accordion > .accordion-item,
+        .accordion > .accordion-item > .accordion-heading,
+        .accordion > .accordion-item > .accordion-heading > .accordion-title {
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+        }
 
-            @if (!RedirectRuleStorage.TableExist)
-            {
-                <div class="accordion-item card-danger">
-                <div class="accordion-heading">
-                    <button type="button" class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="" aria-expanded="true" aria-controls="">Table @(RedirectRuleStorage.RedirectTableName) does not exist!</button></div>
-                    <div class="accordion-body">
-                        <a class="btn btn-danger" href="@(Request.Path)?action=createtable">Create Table @(RedirectRuleStorage.RedirectTableName)</a>
-                    </div>
-                </div>
+        .label {
+            width: 110px;
+        }
+
+        .epi-uif-list-item-text.mdc-list-item__text {
+            font-size: 15px;
+        }
+
+        .epi-pn-navigation .mdc-top-app-bar__title {
+            font-size: 14px;
+        }
+
+        .epi-pn-navigation .mdc-tab {
+            font-size: 14px;
+        }
+
+        .table-sm {
+            font-size: 12px;
+        }
+
+        input, span, select {
+            height: 31px !important;
+        }
+
+        .row {
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+
+        a.btn {
+            color: white;
+        }
+
+        .accordion > .accordion-item > .accordion-heading > .accordion-title > .accordion-button {
+            display: flex;
+            width: 100%;
+            text-align: left;
+            box-sizing: border-box;
+            justify-content: space-between;
+        }
+
+        @@media (min-width: 768px) {
+            .redirect-admin-container {
+                padding: 0 32px;
             }
+        }
 
-            <div class="accordion-item @(Request.Query["action"] == "select" ? "panel-info" : "panel-success")">
-                <div class="accordion-heading">
-                    <div class="accordion-title"><button type="button" class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#addPanel" aria-expanded="false" aria-controls="addPanel">@(Request.Query["action"] == "select" ? "Modify redirect rule" : "Add new redirect rule")</button></div>
-                </div>
-           
-                <div id="addPanel" class="accordion-collapse accordion-body collapse @(Request.Query["action"] == "select" ? "show" : "")">
-                    @using(Html.BeginForm("create","redirectmanager", new {}, FormMethod.Post, true, new  {@class="form-inline" })){
-                        <input type="hidden" name="action" value="@(Request.Query["action"]=="select" ? "modify" : "add")" />
-                        <input type="hidden" name="id" value="@(Request.Query["id"])" />
-                        <div class="row">
-                            <div class="col-md-3">
-                                <div class="input-group  input-group-sm">
-                                    <span class="input-group-text" title="Order of rules">Order</span>
-                                    @Html.TextBoxFor(x=>x.SortOrder,new {@type="number",@class="form-control input-sm",@style="width:80px;",@placeholder="1"})
-                                </div>
+        @@media (min-width: 1200px) {
+            .redirect-admin-container {
+                padding: 0 48px;
+            }
+        }
+
+        @@media (min-width: 1600px) {
+            .redirect-admin-container {
+                padding: 0 64px;
+            }
+        }
+    </style>
+</head>
+<body>
+    @Html.AntiForgeryToken()
+    <platform-navigation />
+
+    <main class="redirect-admin-page">
+        <div class="redirect-admin-container">
+            <div class="redirect-admin-content">
+                <div class="accordion">
+                    @if (!RedirectRuleStorage.TableExist)
+                    {
+                        <div class="accordion-item card-danger">
+                            <div class="accordion-heading">
+                                <button type="button" class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="" aria-expanded="true" aria-controls="">Table @(RedirectRuleStorage.RedirectTableName) does not exist!</button>
                             </div>
-                            <div class="col-md-9">
-                                <div class="input-group input-group-sm">
-                                    <span class="input-group-text" title="If Host field is *, the rule affects on all domains.">Host</span>
-                                        @{
-                                            var selectedHost = CurrentRedirect?.Host ?? "*";
-                                            var hostOptions = new[] { "*" }.Concat(RedirectService.GetGlobalHostOptions()).Select(host => new SelectListItem(){ Text = host, Value = host, Selected = selectedHost == host });
-                                        
+                            <div class="accordion-body">
+                                <a class="btn btn-danger" href="@(Request.Path)?action=createtable">Create Table @(RedirectRuleStorage.RedirectTableName)</a>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="accordion-item @(Request.Query["action"] == "select" ? "panel-info" : "panel-success")">
+                        <div class="accordion-heading">
+                            <div class="accordion-title"><button type="button" class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#addPanel" aria-expanded="false" aria-controls="addPanel">@(Request.Query["action"] == "select" ? "Modify redirect rule" : "Add new redirect rule")</button></div>
+                        </div>
+
+                        <div id="addPanel" class="accordion-collapse accordion-body collapse @(Request.Query["action"] == "select" ? "show" : "")">
+                            @using (Html.BeginForm("create", "redirectmanager", new { }, FormMethod.Post, true, new { @class = "form-inline" }))
+                            {
+                                <input type="hidden" name="action" value="@(Request.Query["action"] == "select" ? "modify" : "add")" />
+                                <input type="hidden" name="id" value="@(Request.Query["id"] )" />
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text" title="Order of rules">Order</span>
+                                            @Html.TextBoxFor(x => x.SortOrder, new { @type = "number", @class = "form-control input-sm", @style = "width:80px;", @placeholder = "1" })
+                                        </div>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text" title="If Host field is *, the rule affects on all domains.">Host</span>
+                                            @{
+                                                var selectedHost = CurrentRedirect?.Host ?? "*";
+                                                var hostOptions = new[] { "*" }.Concat(RedirectService.GetGlobalHostOptions()).Select(host => new SelectListItem { Text = host, Value = host, Selected = selectedHost == host });
+                                            }
+
+                                            @Html.DropDownList("host", hostOptions, null, new { title = "Host", name = "host", @class = "form-control input-sm" })
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-9">
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text label" for="" title="Relative address which address or addresses are redirected.">From Url</span>
+                                            <a data-toggle="tooltip" class="tooltipLink" data-original-title="Relative address which address or addresses are redirected.">
+                                                <span class="glyphicon glyphicon-info-sign"></span>
+                                            </a>
+                                            @Html.TextBoxFor(x => x.FromUrl, new { @class = "form-control input-sm", placeholder = "/example/redirect" })
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text" for="" title="Wildcard allows redirecting all addresses which start with 'From Url' prefix.">
+                                                Wildcard
+                                            </span>
+
+                                            @Html.CheckBoxFor(x => x.WildCard, new { @class = "form-check-input input-sm checkbox", style = "width: 31px; height: 31px; margin-top:0" })
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-9">
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text label" title="Url can be absolute or relative address.">
+                                                To Url
+                                            </span>
+                                            @Html.TextBoxFor(x => x.ToUrl, new { @class = "form-control input-sm", placeholder = "/redirect/to" })
+                                        </div>
+                                        <span style="font-size:9pt">or</span>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text label" title="Content Id is the Optimizely CMS content ID number. If Content Id field is set then the 'To Url' is dismissed.">
+                                                To Content Id
+                                            </span>
+                                            @Html.TextBoxFor(x => x.ToConentId, new { @class = "form-control input-sm", @type = "number", style = "width:90px;", placeholder = "1" })
+                                        </div>
+                                        <div class="input-group input-group-sm mt-2">
+                                            <span class="input-group-text label" title="">
+                                                Language
+                                            </span>
+                                            @{
+                                                var selectedLang = CurrentRedirect?.ToContentLang ?? "";
+                                                var languageOptions = new[] { "" }.Concat(RedirectService.GetGlobalLanguageOptions()).Select(lang => new SelectListItem { Text = lang, Value = lang, Selected = selectedLang == lang });
+                                            }
+
+                                            @Html.DropDownList("tocontentlang", languageOptions, null, new { title = "language", name = "tocontentlang", @class = "form-control input-sm" })
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-9"></div>
+                                    <div class="col-md-3">
+                                        <button type="submit" class="btn btn-sm @(Request.Query["action"] == "select" ? "btn-info" : "btn-success")">Save</button>
+                                        @if (Request.Query["action"] == "select")
+                                        {
+                                            <a href="@Request.Path" class="btn btn-sm btn-warning">Cancel</a>
                                         }
-
-                                        @Html.DropDownList("host", hostOptions, null, new{ title="Host", name="host", @class="form-control input-sm"})
-
+                                    </div>
                                 </div>
-                            </div>
+                            }
                         </div>
-                        <div class="row">
-                            <div class="col-md-9">
-                                <div class="input-group input-group-sm">
-                                        <span class="input-group-text label" for="" title="Relative address which address or addresses are redirected.">From Url</span>
-                                    <a data-toggle="tooltip" class="tooltipLink" data-original-title="Relative address which address or addresses are redirected.">
-                                        <span class="glyphicon glyphicon-info-sign"></span>
-                                    </a>
-                                    @Html.TextBoxFor(x=>x.FromUrl,new{@class="form-control input-sm",placeholder="/example/redirect"})
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="input-group  input-group-sm">
-                                        <span class="input-group-text" for="" title="Wildcard allows redirecting all addresses which start with 'From Url' prefix.">
-                                            Wildcard
-                                        </span>
-
-                                        @Html.CheckBoxFor(x=>x.WildCard,new {@class="form-check-input input-sm checkbox",style="width: 31px; height: 31px; margin-top:0"})
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-9">
-                                <div class="input-group input-group-sm">
-                                    <span class="input-group-text label" title="Url can be absolute or relative address.">
-                                        To Url
-                                    </span>
-                                    @Html.TextBoxFor(x=>x.ToUrl,new {@class="form-control input-sm",placeholder="/redirect/to"})
-                                </div>
-                                <span style="font-size:9pt">or</span>
-                                <div class="input-group input-group-sm">
-                                    <span class="input-group-text label" title="Content Id is the Optimizely CMS content ID number. If Content Id field is set then the 'To Url' is dismissed.">
-                                        To Content Id
-                                    </span>
-                                    @Html.TextBoxFor(x=>x.ToConentId,new {@class="form-control input-sm",@type="number",style="width:90px;",placeholder="1"})
-                                </div>
-                                <div class="input-group input-group-sm mt-2">
-                                    <span class="input-group-text label" title="">
-                                        Language
-                                    </span>
-                                        @{
-                                            var selectedLang = CurrentRedirect?.ToContentLang ?? "";
-                                            var languageOptions = new[] { "" }.Concat(RedirectService.GetGlobalLanguageOptions()).Select(lang => new SelectListItem(){ Text = lang, Value = lang, Selected = selectedLang == lang });
-                                        }
-
-                                        @Html.DropDownList("tocontentlang", languageOptions, null, new{ title="language", name="tocontentlang", @class="form-control input-sm"})
-
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                             <div class="col-md-9"></div>
-                            <div class="col-md-3">
-                                <button type="submit" class="btn btn-sm @(Request.Query["action"] == "select" ? "btn-info" : "btn-success")">Save</button>
-                                @if (Request.Query["action"] == "select")
-                                {
-                                    <a href="@Request.Path" class="btn btn-sm btn-warning">Cancel</a>
-                                }
-                            </div>
-                        </div>
-                   }
-                </div>
-            </div>
-
-            <div class="accordion-item card-danger">
-                <div class="accordion-heading">
-                    <div class="accordion-title"><button type="button" class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#addPanel2" aria-expanded="false" aria-controls="addPanel2">Remove duplicate rules</button></div>
-                </div>
-                <div class="accordion-collapse accordion-body collapse @(Request.Query["action"] == "dup" ? "in" : "out")" id="addPanel2">
-                    @if (!string.IsNullOrEmpty(Request.Query["message"]))
-                    {
-                        @Request.Query["message"]
-                    }
-                    else
-                    {
-                    <a class="btn btn-danger" href="@(Request.Path)?action=dupl">Remove duplicate rules safely and check for removed urls</a>
-                    }
-                </div>
-            </div>
-
-            <div class="accordion-item panel-primary">
-                <div class="accordion-heading">
-                    <div class="accordion-title"><button type="button" class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#exportPanel" aria-expanded="false" aria-controls="exportPanel">Export Rules</button></div>
-                </div>
-                <div class="accordion-collapse accordion-body collapse" id="exportPanel">
-                    @if (!string.IsNullOrEmpty(TempData["ErrorMessage"]?.ToString()))
-                    {
-                        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
-                    }
-                    @using(Html.BeginForm("export","redirectmanager", new {}, FormMethod.Post, true, new  {@class="form-inline" })){
-                        <div class="row">
-                            <div class="col-md-12">
-                                <p>Export all redirect rules to an Excel file.</p>
-                                <div class="form-check mb-3">
-                                    <input type="checkbox" class="form-check-input" id="convertToUrl" name="convertToUrl" value="true" style="width: 20px; height: 20px;" />
-                                    <label class="form-check-label" for="convertToUrl" style="margin-left: 10px;">
-                                        Convert to Url
-                                        <small class="text-muted d-block">Will export and convert ToContentId to an URL (sets ToContentId to 0 in export)</small>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-12">
-                                <button type="submit" name="format" value="excel" class="btn btn-sm btn-success">Export as Excel</button>
-                            </div>
-                        </div>
-                    }
-                </div>
-            </div>
-
-                @if (!string.IsNullOrEmpty(TempData["ImportMessage"]?.ToString()))
-                {
-                    var messageType = TempData["ImportMessageType"]?.ToString() ?? "info";
-                    <div class="alert alert-@messageType">
-                        @TempData["ImportMessage"]
-                        @if (!string.IsNullOrEmpty(TempData["ImportErrors"]?.ToString()))
-                        {
-                            <hr />
-                            <strong>Errors:</strong>
-                            <div>@Html.Raw(TempData["ImportErrors"])</div>
-                        }
                     </div>
-                }
 
-            <div class="accordion-item panel-warning">
-                <div class="accordion-heading">
-                    <div class="accordion-title"><button type="button" class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#importPanel" aria-expanded="false" aria-controls="importPanel">Import Rules</button></div>
-                </div>
-                <div class="accordion-collapse accordion-body collapse" id="importPanel">
+                    <div class="accordion-item card-danger">
+                        <div class="accordion-heading">
+                            <div class="accordion-title"><button type="button" class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#addPanel2" aria-expanded="false" aria-controls="addPanel2">Remove duplicate rules</button></div>
+                        </div>
+                        <div class="accordion-collapse accordion-body collapse @(Request.Query["action"] == "dup" ? "show" : "")" id="addPanel2">
+                            @if (!string.IsNullOrEmpty(Request.Query["message"]))
+                            {
+                                @Request.Query["message"]
+                            }
+                            else
+                            {
+                                <a class="btn btn-danger" href="@(Request.Path)?action=dupl">Remove duplicate rules safely and check for removed urls</a>
+                            }
+                        </div>
+                    </div>
 
-                    @using(Html.BeginForm("import","redirectmanager", new {}, FormMethod.Post, true, new  {@class="", enctype="multipart/form-data" })){
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="alert alert-info">
-                                    <strong>Instructions:</strong>
-                                    <ul class="mb-0 mt-2">
-                                        <li>Upload an Excel (.xlsx) file with the same format as the export.</li>
-                                        <li>Required columns: Order, Host, From Url, Wildcard, To Url, To Content Id, Language</li>
-                                        <li>Wildcard should be "Yes" or "No"</li>
-                                        <li><strong>Update Mode:</strong> Matches existing rules by "From Url" and "Host", updates them if found, adds new ones if not.</li>
-                                        <li><strong>Replace All Mode:</strong> Deletes all existing rules first, then imports all rules from the file.</li>
-                                    </ul>
-                                </div>
-                            </div>
+                    <div class="accordion-item panel-primary">
+                        <div class="accordion-heading">
+                            <div class="accordion-title"><button type="button" class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#exportPanel" aria-expanded="false" aria-controls="exportPanel">Export Rules</button></div>
                         </div>
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="mb-3">
-                                    <label for="importFile" class="form-label">Select file to import:</label>
-                                    <input type="file" class="form-control" id="importFile" name="importFile" accept=".xlsx" required />
+                        <div class="accordion-collapse accordion-body collapse" id="exportPanel">
+                            @if (!string.IsNullOrEmpty(TempData["ErrorMessage"]?.ToString()))
+                            {
+                                <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+                            }
+                            @using (Html.BeginForm("export", "redirectmanager", new { }, FormMethod.Post, true, new { @class = "form-inline" }))
+                            {
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <p>Export all redirect rules to an Excel file.</p>
+                                        <div class="form-check mb-3">
+                                            <input type="checkbox" class="form-check-input" id="convertToUrl" name="convertToUrl" value="true" style="width: 20px; height: 20px;" />
+                                            <label class="form-check-label" for="convertToUrl" style="margin-left: 10px;">
+                                                Convert to Url
+                                                <small class="text-muted d-block">Will export and convert ToContentId to an URL (sets ToContentId to 0 in export)</small>
+                                            </label>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="form-check mb-3">
-                                    <input type="checkbox" class="form-check-input" id="removeAllRules" name="removeAllRules" value="true" style="width: 20px; height: 20px;" />
-                                    <label class="form-check-label" for="removeAllRules" style="margin-left: 10px;">
-                                        <span class="text-danger"><strong>Replace All Rules</strong></span>
-                                        <small class="text-muted d-block">
-                                            ⚠️ WARNING: This will delete ALL existing redirect rules before importing. 
-                                            If unchecked, existing rules will be updated where matching, and new rules will be added.
-                                        </small>
-                                    </label>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <button type="submit" name="format" value="excel" class="btn btn-sm btn-success">Export as Excel</button>
+                                    </div>
                                 </div>
-                            </div>
+                            }
                         </div>
-                        <div class="row">
-                            <div class="col-md-12">
-                                <button type="submit" class="btn btn-sm btn-warning" onclick="return confirm('Are you sure you want to import these rules?');">Import Rules</button>
-                            </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(TempData["ImportMessage"]?.ToString()))
+                    {
+                        var messageType = TempData["ImportMessageType"]?.ToString() ?? "info";
+                        <div class="alert alert-@messageType">
+                            @TempData["ImportMessage"]
+                            @if (!string.IsNullOrEmpty(TempData["ImportErrors"]?.ToString()))
+                            {
+                                <hr />
+                                <strong>Errors:</strong>
+                                <div>@Html.Raw(TempData["ImportErrors"])</div>
+                            }
                         </div>
                     }
-                </div>
-            </div>
 
-            <div class="accordion-item panel-info">
-                <div class="accordion-heading">
-                    <div class="accordion-title"><button type="button" class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#searchPanel" aria-expanded="false" aria-controls="searchPanel">Search Rules</button></div>
-                </div>
-                <div class="accordion-collapse accordion-body collapse" id="searchPanel">
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="alert alert-info">
-                                <strong>Search Instructions:</strong>
-                                <p class="mb-0 mt-2">Type in the search box to filter redirect rules. The search will look through From URL, To URL, To Content ID, and Host fields.</p>
+                    <div class="accordion-item panel-warning">
+                        <div class="accordion-heading">
+                            <div class="accordion-title"><button type="button" class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#importPanel" aria-expanded="false" aria-controls="importPanel">Import Rules</button></div>
+                        </div>
+                        <div class="accordion-collapse accordion-body collapse" id="importPanel">
+                            @using (Html.BeginForm("import", "redirectmanager", new { }, FormMethod.Post, true, new { @class = "", enctype = "multipart/form-data" }))
+                            {
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="alert alert-info">
+                                            <strong>Instructions:</strong>
+                                            <ul class="mb-0 mt-2">
+                                                <li>Upload an Excel (.xlsx) file with the same format as the export.</li>
+                                                <li>Required columns: Order, Host, From Url, Wildcard, To Url, To Content Id, Language</li>
+                                                <li>Wildcard should be "Yes" or "No"</li>
+                                                <li><strong>Update Mode:</strong> Matches existing rules by "From Url" and "Host", updates them if found, adds new ones if not.</li>
+                                                <li><strong>Replace All Mode:</strong> Deletes all existing rules first, then imports all rules from the file.</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="mb-3">
+                                            <label for="importFile" class="form-label">Select file to import:</label>
+                                            <input type="file" class="form-control" id="importFile" name="importFile" accept=".xlsx" required />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="form-check mb-3">
+                                            <input type="checkbox" class="form-check-input" id="removeAllRules" name="removeAllRules" value="true" style="width: 20px; height: 20px;" />
+                                            <label class="form-check-label" for="removeAllRules" style="margin-left: 10px;">
+                                                <span class="text-danger"><strong>Replace All Rules</strong></span>
+                                                <small class="text-muted d-block">
+                                                    ⚠️ WARNING: This will delete ALL existing redirect rules before importing.
+                                                    If unchecked, existing rules will be updated where matching, and new rules will be added.
+                                                </small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <button type="submit" class="btn btn-sm btn-warning" onclick="return confirm('Are you sure you want to import these rules?');">Import Rules</button>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="accordion-item panel-info">
+                        <div class="accordion-heading">
+                            <div class="accordion-title"><button type="button" class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#searchPanel" aria-expanded="false" aria-controls="searchPanel">Search Rules</button></div>
+                        </div>
+                        <div class="accordion-collapse accordion-body collapse" id="searchPanel">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="alert alert-info">
+                                        <strong>Search Instructions:</strong>
+                                        <p class="mb-0 mt-2">Type in the search box to filter redirect rules. The search will look through From URL, To URL, To Content ID, and Host fields.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-10">
+                                    <div class="input-group input-group-sm mb-3">
+                                        <span class="input-group-text">Search</span>
+                                        <input type="text" class="form-control" id="searchInput" placeholder="Type to search rules..." />
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="button" class="btn btn-sm btn-secondary" id="resetSearchBtn">Reset Search</button>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <p id="searchResults" class="text-muted small mb-0"></p>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-md-10">
-                            <div class="input-group input-group-sm mb-3">
-                                <span class="input-group-text">Search</span>
-                                <input type="text" class="form-control" id="searchInput" placeholder="Type to search rules..." />
-                            </div>
+                </div>
+
+                <div class="rules pt-3 pb-3">
+                    <table class="table table-condensed table-hover table-sm" id="redirectRulesTable">
+                        <thead>
+                            <tr>
+                                <th>Order</th>
+                                <th>Host</th>
+                                <th>From Url</th>
+                                <th>Wildcard</th>
+                                <th>To Url</th>
+                                <th>To Content Id</th>
+                                <th>Lang</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var result in RedirectService.List())
+                            {
+                                <tr class="rule-row">
+                                    <td>@(result.SortOrder)</td>
+                                    <td>@(result.Host)</td>
+                                    <td><b>@(result.FromUrl)</b></td>
+                                    <td><input type="checkbox" class="checkbox input-xs" @(result.Wildcard ? "checked" : null) disabled /></td>
+                                    <td><b>@(result.ToUrl)</b></td>
+                                    <td><b>@(result.ToContentId)</b></td>
+                                    <td>@(result.ToContentLang)</td>
+                                    <td>
+                                        <a class="btn btn-sm btn-info" href="@($"{Request.Path}?action=select&id={result.Id}")">MODIFY</a>
+                                        <a class="btn btn-sm btn-danger" href="@($"{Request.Path}?action=delete&id={result.Id}")" onclick="return confirm('Are you sure you want to delete this rule?');">DELETE</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="accordion">
+                    <div class="accordion-item panel-default">
+                        <div class="accordion-heading">
+                            <div class="accordion-title"><button type="button" class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#instructionsPanel" aria-expanded="false" aria-controls="instructionsPanel">Instructions</button></div>
                         </div>
-                        <div class="col-md-2">
-                            <button type="button" class="btn btn-sm btn-secondary" id="resetSearchBtn">Reset Search</button>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-12">
-                            <p id="searchResults" class="text-muted small mb-0"></p>
+                        <div id="instructionsPanel" class="accordion-collapse accordion-body collapse">
+                            <h5>Redirect Rules</h5>
+                            <p>Redirect Manager allows you to add, modify and remove <b>permanent redirection rules</b> (alias HTTP 301, Moved Permanently).</p>
+                            <p>Rules are redirected in 404 handler, so all the pages and static content override these rules.</p>
+                            <p>URL addresses are <b>NOT case sensitive</b>. Also the <b>trailing slash (/) in URLs is removed</b> before rules are applied.</p>
+                            <p>Wildcard rules redirect all the addresses that start with the "From URL" prefix.</p>
+                            <p><b>⚠️ Warning:</b> Be careful, it's possible to create an eternal loop and damage the service.</p>
+
+                            <hr class="my-3" />
+
+                            <h5>Export Rules</h5>
+                            <p>Export all your redirect rules to Excel format:</p>
+                            <ul>
+                                <li><b>Excel Export:</b> Creates a formatted spreadsheet with all rules, perfect for documentation</li>
+                                <li><b>Convert to URL:</b> When checked, Content IDs are automatically converted to their corresponding URLs (ToContentId will be set to 0)</li>
+                            </ul>
+                            <p><b>Use cases:</b> Backup rules, share between environments, bulk editing, documentation</p>
+
+                            <hr class="my-3" />
+
+                            <h5>Import Rules</h5>
+                            <p>Import redirect rules from Excel (.xlsx) files for bulk operations:</p>
+                            <ul>
+                                <li><b>File Format:</b> Must contain columns: Order, Host, From Url, Wildcard (Yes/No), To Url, To Content Id, Language</li>
+                                <li><b>Update Mode (default):</b> Matches existing rules by "From URL" and "Host", updates if found, adds new ones if not</li>
+                                <li><b>Replace All Mode:</b> ⚠️ Deletes ALL existing rules first, then imports from file - use with extreme caution!</li>
+                                <li><b>Error Handling:</b> Shows detailed error messages for each problematic row</li>
+                            </ul>
+                            <p><b>Use cases:</b> Restore backups, migrate between environments, bulk updates, initial setup</p>
+
+                            <hr class="my-3" />
+
+                            <h5>Cleanup Rules</h5>
+                            <p>The "Remove duplicate rules" function safely removes:</p>
+                            <ul>
+                                <li>Duplicate redirect rules</li>
+                                <li>Rules pointing to deleted content</li>
+                                <li>Self-referencing rules that could cause loops</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
+    </main>
 
-        </div>
-        <div class="rules pt-3 pb-3">
-            <table class="table table-condensed table-hover table-sm" id="redirectRulesTable">
-                <thead>
-                    <tr>
-                        <th>Order</th>
-                        <th>Host</th>
-                        <th>From Url</th>
-                        <th>Wildcard</th>
-                        <th>To Url</th>
-                        <th>To Content Id</th>
-                        <th>Lang</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var result in RedirectService.List())
-                    {
-                        <tr class="rule-row">
-                            <td>@(result.SortOrder)</td>
-                            <td>@(result.Host)</td>
-                            <td><b>@(result.FromUrl)</b></td>
-                            <td><input type="checkbox" class="checkbox input-xs" @(result.Wildcard ? "checked" : null) disabled /></td>
-                            <td><b>@(result.ToUrl)</b></td>
-                            <td><b>@(result.ToContentId)</b></td>
-                            <td>@(result.ToContentLang)</td>
-                            <td>
-                                <a class="btn btn-sm btn-info" href="@($"{Request.Path}?action=select&id={result.Id}")">MODIFY</a>
-                                <a class="btn btn-sm btn-danger" href="@($"{Request.Path}?action=delete&id={result.Id}")" onclick="return confirm('Are you sure you want to delete this rule?');">DELETE</a>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-        <div class="accordion">
-            <div class="accordion-item panel-default">
-                <div class="accordion-heading">
-                    <div class="accordion-title"><button type="button" class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#instructionsPanel" aria-expanded="false" aria-controls="instructionsPanel">Instructions</button></div>
-                </div>
-                <div id="instructionsPanel" class="accordion-collapse accordion-body collapse">
-                    <h5>Redirect Rules</h5>
-                    <p>Redirect Manager allows you to add, modify and remove <b>permanent redirection rules</b> (alias HTTP 301, Moved Permanently).</p>
-                    <p>Rules are redirected in 404 handler, so all the pages and static content override these rules.</p>
-                    <p>URL addresses are <b>NOT case sensitive</b>. Also the <b>trailing slash (/) in URLs is removed</b> before rules are applied.</p>
-                    <p>Wildcard rules redirect all the addresses that start with the "From URL" prefix.</p>
-                    <p><b>⚠️ Warning:</b> Be careful, it's possible to create an eternal loop and damage the service.</p>
-                    
-                    <hr class="my-3" />
-                    
-                    <h5>Export Rules</h5>
-                    <p>Export all your redirect rules to Excel format:</p>
-                    <ul>
-                        <li><b>Excel Export:</b> Creates a formatted spreadsheet with all rules, perfect for documentation</li>
-                        <li><b>Convert to URL:</b> When checked, Content IDs are automatically converted to their corresponding URLs (ToContentId will be set to 0)</li>
-                    </ul>
-                    <p><b>Use cases:</b> Backup rules, share between environments, bulk editing, documentation</p>
-                    
-                    <hr class="my-3" />
-                    
-                    <h5>Import Rules</h5>
-                    <p>Import redirect rules from Excel (.xlsx) files for bulk operations:</p>
-                    <ul>
-                        <li><b>File Format:</b> Must contain columns: Order, Host, From Url, Wildcard (Yes/No), To Url, To Content Id, Language</li>
-                        <li><b>Update Mode (default):</b> Matches existing rules by "From URL" and "Host", updates if found, adds new ones if not</li>
-                        <li><b>Replace All Mode:</b> ⚠️ Deletes ALL existing rules first, then imports from file - use with extreme caution!</li>
-                        <li><b>Error Handling:</b> Shows detailed error messages for each problematic row</li>
-                    </ul>
-                    <p><b>Use cases:</b> Restore backups, migrate between environments, bulk updates, initial setup</p>
-                    
-                    <hr class="my-3" />
-                    
-                    <h5>Cleanup Rules</h5>
-                    <p>The "Remove duplicate rules" function safely removes:</p>
-                    <ul>
-                        <li>Duplicate redirect rules</li>
-                        <li>Rules pointing to deleted content</li>
-                        <li>Self-referencing rules that could cause loops</li>
-                    </ul>
-                </div>
-        </div>
-        </div>
-    </div>
-    </div>
+    @Html.RequiredClientResources("Footer")
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
-    
+
     <script>
-        // Search functionality
         (function() {
             const searchInput = document.getElementById('searchInput');
             const resetSearchBtn = document.getElementById('resetSearchBtn');
             const searchResults = document.getElementById('searchResults');
             const tableBody = document.querySelector('#redirectRulesTable tbody');
-            const allRows = tableBody.querySelectorAll('.rule-row');
+            const allRows = tableBody ? tableBody.querySelectorAll('.rule-row') : [];
             const totalRows = allRows.length;
 
             function performSearch() {
@@ -407,21 +506,18 @@
 
                 allRows.forEach(function(row) {
                     if (searchTerm === '') {
-                        // Show all rows when search is empty
                         row.style.display = '';
                         visibleCount++;
                     } else {
-                        // Get text content from specific columns
                         const cells = row.querySelectorAll('td');
                         const host = cells[1].textContent.toLowerCase();
                         const fromUrl = cells[2].textContent.toLowerCase();
                         const toUrl = cells[4].textContent.toLowerCase();
                         const toContentId = cells[5].textContent.toLowerCase();
 
-                        // Check if any field contains the search term
-                        if (host.includes(searchTerm) || 
-                            fromUrl.includes(searchTerm) || 
-                            toUrl.includes(searchTerm) || 
+                        if (host.includes(searchTerm) ||
+                            fromUrl.includes(searchTerm) ||
+                            toUrl.includes(searchTerm) ||
                             toContentId.includes(searchTerm)) {
                             row.style.display = '';
                             visibleCount++;
@@ -431,7 +527,6 @@
                     }
                 });
 
-                // Update results text
                 if (searchTerm === '') {
                     searchResults.textContent = 'Showing all ' + totalRows + ' rules';
                 } else {
@@ -440,11 +535,12 @@
             }
 
             function resetSearch() {
-                searchInput.value = '';
+                if (searchInput) {
+                    searchInput.value = '';
+                }
                 performSearch();
             }
 
-            // Event listeners
             if (searchInput) {
                 searchInput.addEventListener('input', performSearch);
                 searchInput.addEventListener('keyup', performSearch);
@@ -454,57 +550,13 @@
                 resetSearchBtn.addEventListener('click', resetSearch);
             }
 
-            // Initialize with all rows visible
             performSearch();
         })();
     </script>
-
-    <style>
-        .outer-container {
-            margin-top: 60px;
-            width: 100%;
-        }
-
-        .container {
-            padding-bottom: 100px;
-        }
-
-        .label {
-            width:110px;
-        }
-        .epi-uif-list-item-text.mdc-list-item__text {
-            font-size: 15px;
-        }
-        .epi-pn-navigation .mdc-top-app-bar__title {
-            font-size: 14px;
-        }
-        
-        .epi-pn-navigation  .mdc-tab {
-            font-size: 14px;
-        }
-        .table-sm {
-            font-size: 12px;
-        }
-        input, span, select {
-            height: 31px !important;
-        }
-        .row{
-            margin-top: 5px;
-            margin-bottom: 5px;
-        }
-
-        a.btn { color: white;}
-
-        #scrollbox {
-            height: 500px; /* Adjust the height as needed */
-            overflow-y: auto;
-        }
-    </style>
 </body>
 </html>
 
 @functions{
-
     public RedirectRule CurrentRedirect = null;
     HttpRequest Request = null;
 
@@ -526,28 +578,26 @@
             Model.ToConentId = CurrentRedirect.ToContentId;
             Model.ToContentLang = CurrentRedirect.ToContentLang;
         }
-       
+
         if (Request.Query["action"] == "delete")
         {
             int n = RedirectService.DeleteRedirect(CurrentRedirect.Id);
             if (n > 0)
             {
-                 HttpContextAccessor.HttpContext.Response.Redirect(Request.Path);
+                HttpContextAccessor.HttpContext.Response.Redirect(Request.Path);
             }
         }
 
         if (Request.Query["action"] == "dupl")
         {
             int cc = RedirectService.CleanupRulesJob();
-             HttpContextAccessor.HttpContext.Response.Redirect(Request.Path + $"?action=dup&message=Removed {cc} rules");            
+            HttpContextAccessor.HttpContext.Response.Redirect(Request.Path + $"?action=dup&message=Removed {cc} rules");
         }
 
         if (Request.Query["action"] == "createtable")
         {
             RedirectRuleStorage.CreateTable();
-             HttpContextAccessor.HttpContext.Response.Redirect(Request.Path);
+            HttpContextAccessor.HttpContext.Response.Redirect(Request.Path);
         }
-
     }
-
 }

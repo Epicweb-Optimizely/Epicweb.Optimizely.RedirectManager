@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## \[7.0.0] - 2026-08
+
+* Feature: Target Optimizely CMS 13 / .NET 10
+* Feature: Updated admin UI experience for CMS 13 compatibility
+* Feature: Added support for the current Optimizely shell resources and navigation pattern
+* Note: If you are running Optimizely CMS 12, use package version 6.x instead
+
 ## \[6.4.0] - 2026-01
 
 * Feature: Export redirect rules to Excel (.xlsx) format

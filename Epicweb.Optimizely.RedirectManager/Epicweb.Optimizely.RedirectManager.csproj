@@ -1,12 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
   <PropertyGroup>
-	  <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
-	  <Version>6.4.0</Version>
-	  <PackageVersion>6.4.0</PackageVersion>
-	  <AssemblyVersion>6.4.0.0</AssemblyVersion>
+	  <TargetFrameworks>net10.0</TargetFrameworks>
+	  <Version>7.0.0</Version>
+	  <PackageVersion>7.0.0</PackageVersion>
+	  <AssemblyVersion>7.0.0.0</AssemblyVersion>
 	  <PackageId>Epicweb.Optimizely.RedirectManager</PackageId>
-	  <Title>Redirect handler Admin UI integration Optimizely</Title>
+	  <Title>Redirect handler Admin UI integration for Optimizely CMS 13</Title>
 	  <Authors>Luc Gosso, Epicweb</Authors>
 	  <Company>Epicweb</Company>
 	  <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
@@ -14,9 +14,9 @@
 	  <PackageIcon>icon.png</PackageIcon>
 	  <PackageIconUrl>https://epicweb.se/icons/favicon-128.png</PackageIconUrl>
 	  <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-	  <Description>This library contains a RedirectManager and admin user interface integration in an Optimizely project.</Description>
+	  <Description>This library contains a RedirectManager and admin user interface integration for Optimizely CMS 13 / .NET 10. If you are running Optimizely CMS 12, use package version 6.x instead.</Description>
 	  <PackageReleaseNotes>https://github.com/epicweb-optimizely/epicweb.optimizely.redirectmanager/blob/main/CHANGELOG.md</PackageReleaseNotes>
-	  <PackageTags>Redirect Redirect handler 404 NotFound Errorhandler Gosso Epicweb addon</PackageTags>
+	  <PackageTags>Redirect Redirect handler 404 NotFound Errorhandler Gosso Epicweb addon CMS13</PackageTags>
 	  <RepositoryUrl>https://github.com/epicweb-optimizely/epicweb.optimizely.redirectmanager.git</RepositoryUrl>
 	  <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
 	  <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
@@ -27,10 +27,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="EPiServer.CMS.UI.Core" Version="12.24.0" />
-    <PackageReference Include="EPPlus" Version="6.2.10" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.0" />
+    <PackageReference Include="EPiServer.CMS.UI.Core" Version="13.1.1" />
+	<PackageReference Include="EPPlus" Version="8.6.3" />
+	<PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.10" />
+	<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.10" />
   </ItemGroup>
 
   <ItemGroup>
