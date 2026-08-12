@@ -1,6 +1,7 @@
-﻿using EPiServer.Web;
+using EPiServer.Web;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using static Epicweb.Optimizely.RedirectManager.RedirectKeeper;
@@ -18,31 +19,56 @@ namespace Epicweb.Optimizely.RedirectManager
         /// <param name="langParam">If you have complex language setup, change to Name or ThreeLetter</param>
         public static void AddRedirectManager(this IServiceCollection services, bool addQuickNavigator = true, bool enableChangeEvent = true, LangParam langParam = LangParam.TwoLetter)
         {
+            services.AddRedirectManager(options =>
+            {
+                options.AddQuickNavigator = addQuickNavigator;
+                options.EnableChangeEvent = enableChangeEvent;
+                options.LangParam = langParam;
+            });
+        }
+
+        /// <summary>
+        /// Add Redirect Manager to Optimizely UI
+        /// </summary>
+        /// <param name="services"></param>
+        /// <param name="configure">Configure roles, authentication schemes (e.g. for Opti ID) and other options</param>
+        public static void AddRedirectManager(this IServiceCollection services, Action<RedirectManagerOptions> configure)
+        {
+            var options = new RedirectManagerOptions();
+            configure?.Invoke(options);
+            RedirectManagerOptions.Current = options;
+
             services.AddDbContext<RedirectDbContext>();
             services.AddTransient<RedirectService>();
             services.AddSingleton<RedirectRuleStorage>();
-            if (addQuickNavigator)
+            if (options.AddQuickNavigator)
                 services.AddTransient<IQuickNavigatorItemProvider, RedirectManagerQuickNavigator>();
 
-            services.AddAuthorization(options =>
+            services.AddAuthorization(authorizationOptions =>
             {
-                options.AddPolicy("episerver:redirectmanager", policy => policy.Requirements.Add(new HasRoleRequirement("RedirectManagers")));
+                authorizationOptions.AddPolicy(RedirectManagerOptions.AuthorizationPolicyName, policy =>
+                {
+                    if (options.AuthenticationSchemes.Length > 0)
+                        policy.AddAuthenticationSchemes(options.AuthenticationSchemes);
+                    policy.RequireAuthenticatedUser();
+                    policy.Requirements.Add(new HasRoleRequirement(options.AllowedRoles));
+                });
             });
 
             services.AddSingleton<IAuthorizationHandler, RedirectPermissionHandler>();
 
-            RedirectKeeper.Enabled = enableChangeEvent;
-            RedirectKeeper.LangParameter = langParam;
+            RedirectKeeper.Enabled = options.EnableChangeEvent;
+            RedirectKeeper.LangParameter = options.LangParam;
 
         }
 
         public class HasRoleRequirement : IAuthorizationRequirement
         {
-            public string Role { get; }
+            public string[] Roles { get; }
 
-            public HasRoleRequirement(string role)
+            public HasRoleRequirement(params string[] roles)
             {
-                Role = role;
+                Roles = roles ?? Array.Empty<string>();
             }
         }
 
@@ -56,12 +82,7 @@ namespace Epicweb.Optimizely.RedirectManager
                 {
                     if (requirement is HasRoleRequirement req)
                     {
-                        if (context.User.IsInRole(req.Role))
-                        {
-                            context.Succeed(requirement);
-                        }
-
-                        if (context.User.IsInRole("WebAdmins"))
+                        if (req.Roles.Any(role => context.User.IsInRole(role)))
                         {
                             context.Succeed(requirement);
                         }

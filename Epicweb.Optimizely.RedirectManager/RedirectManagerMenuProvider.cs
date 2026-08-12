@@ -1,5 +1,6 @@
 ﻿using EPiServer.Shell.Navigation;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Epicweb.Optimizely.RedirectManager
 {
@@ -15,8 +16,8 @@ namespace Epicweb.Optimizely.RedirectManager
                 "/redirectmanager/")
             {
                 SortIndex = SortIndex.First + 25,
-                IsAvailable = (context) => context.User.IsInRole("RedirectManagers"),
-                AuthorizationPolicy = "episerver:redirectmanager"
+                IsAvailable = (context) => RedirectManagerOptions.Current.AllowedRoles.Any(role => context.User.IsInRole(role)),
+                AuthorizationPolicy = RedirectManagerOptions.AuthorizationPolicyName
             });
             return menuItems;
         }

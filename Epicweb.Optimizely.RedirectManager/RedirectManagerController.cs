@@ -6,7 +6,7 @@ using System.IO;
 
 namespace Epicweb.Optimizely.RedirectManager
 {
-    [Authorize(Roles = "CmsAdmins,WebAdmins,Administrators,RedirectManagers")]
+    [Authorize(Policy = RedirectManagerOptions.AuthorizationPolicyName)]
 
     public class RedirectManagerController : Controller
     {

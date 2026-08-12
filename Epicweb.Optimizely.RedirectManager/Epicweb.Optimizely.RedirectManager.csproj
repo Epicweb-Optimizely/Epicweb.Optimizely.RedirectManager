@@ -2,9 +2,9 @@
 
   <PropertyGroup>
 	  <TargetFrameworks>net10.0</TargetFrameworks>
-	  <Version>7.0.0</Version>
-	  <PackageVersion>7.0.0</PackageVersion>
-	  <AssemblyVersion>7.0.0.0</AssemblyVersion>
+	  <Version>7.1.0</Version>
+	  <PackageVersion>7.1.0</PackageVersion>
+	  <AssemblyVersion>7.1.0.0</AssemblyVersion>
 	  <PackageId>Epicweb.Optimizely.RedirectManager</PackageId>
 	  <Title>Redirect handler Admin UI integration for Optimizely CMS 13</Title>
 	  <Authors>Luc Gosso, Epicweb</Authors>

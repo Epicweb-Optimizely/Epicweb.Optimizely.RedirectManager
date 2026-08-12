@@ -2,6 +2,7 @@
 using EPiServer.Security;
 using EPiServer.Web;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Epicweb.Optimizely.RedirectManager
 {
@@ -16,7 +17,7 @@ namespace Epicweb.Optimizely.RedirectManager
         {
             var dictionary = new Dictionary<string, QuickNavigatorMenuItem>();
 
-            if (PrincipalInfo.CurrentPrincipal.IsInRole("CmsAdmins") || PrincipalInfo.CurrentPrincipal.IsInRole("RedirectManagers"))
+            if (RedirectManagerOptions.Current.AllowedRoles.Any(role => PrincipalInfo.CurrentPrincipal.IsInRole(role)))
             {
                 dictionary.Add("redirectmanager", new QuickNavigatorMenuItem("RedirectManager", "/redirectmanager/", null, "true", null));
             }
