@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## \[7.1.0] - 2026-08
+
+* Feature: Opti ID support — new `AddRedirectManager(Action<RedirectManagerOptions>)` overload with configurable `AllowedRoles` and `AuthenticationSchemes` (for mixed-mode `AddOptimizelyIdentity(useAsDefault: false)` setups)
+* Change: `RedirectManagerController` now authorizes via the `episerver:redirectmanager` policy instead of hardcoded `[Authorize(Roles = ...)]`
+* Change: Menu item and Quick Navigator visibility now honor the configured `AllowedRoles` (default: RedirectManagers, CmsAdmins, WebAdmins, Administrators) — CmsAdmins-only users (Opti ID admins) now see the menu
+* Note: Under Opti ID, create a custom role `RedirectManagers` in the Opti ID Admin Center to grant access to non-admins
+
 ## \[7.0.0] - 2026-08
 
 * Feature: Target Optimizely CMS 13 / .NET 10

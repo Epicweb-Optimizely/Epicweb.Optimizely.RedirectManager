@@ -57,6 +57,17 @@ Add to startup.cs
         enableChangeEvent: true,
         langParam: RedirectKeeper.LangParam.Name);//if you have complex language setup, change to Name or ThreeLetter, default is TwoLetter
 
+or use the options overload for full control (roles, authentication schemes):
+
+    services.AddRedirectManager(options =>
+    {
+        options.AddQuickNavigator = true;
+        options.EnableChangeEvent = true;
+        options.LangParam = RedirectKeeper.LangParam.Name;
+        options.AllowedRoles = new[] { "RedirectManagers", "CmsAdmins", "WebAdmins", "Administrators" };//default
+        options.AuthenticationSchemes = Array.Empty<string>();//default, see Opti ID section below
+    });
+
 also
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -204,7 +215,32 @@ After import, you'll see a summary showing:
 
 ## Roles and restrictions
 
-Users with role WebAdmins and RedirectManagers will automatically see the menu in Optimizely CMS
+Users with role RedirectManagers, CmsAdmins, WebAdmins or Administrators will automatically see the menu in Optimizely CMS.
+
+The roles can be changed via the options overload:
+
+    services.AddRedirectManager(options =>
+    {
+        options.AllowedRoles = new[] { "RedirectManagers", "CmsAdmins" };
+    });
+
+## Using with Opti ID
+
+If your site uses Opti ID (`EPiServer.OptimizelyIdentity`) instead of ASP.NET Identity, note the following:
+
+- Opti ID only maps the virtual roles **CmsAdmins** and **CmsEditors** automatically. Roles like `WebAdmins` and `Administrators` do not exist. Users with CMS admin access will get access to the Redirect Manager out of the box (via `CmsAdmins`).
+- To grant access to non-admins, create a custom role named **RedirectManagers** in the Opti ID Admin Center and assign it to users or groups. The role syncs to the CMS when the user logs in.
+- If Opti ID is your default authentication scheme (`services.AddOptimizelyIdentity(useAsDefault: true)`), no further configuration is needed.
+- If you run **mixed-mode** authentication (`useAsDefault: false`, e.g. because your site has front-end visitor login), the `/redirectmanager` route is not covered by the Opti ID scheme automatically since it is not a protected shell module. Tell the Redirect Manager to authorize against the Opti ID scheme:
+
+```csharp
+using EPiServer.OptimizelyIdentity;
+
+services.AddRedirectManager(options =>
+{
+    options.AuthenticationSchemes = new[] { OptimizelyIdentityDefaults.SchemeName };
+});
+```
 
 # Sandbox alloy app
 

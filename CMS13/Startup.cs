@@ -32,6 +32,18 @@ public class Startup
     enableChangeEvent: true,
     langParam: RedirectKeeper.LangParam.Name);//if you have complex language setup, change to Name or ThreeLetter
 
+        // Using Opti ID (EPiServer.OptimizelyIdentity) instead of ASP.NET Identity?
+        // 1. Remove .AddCmsAspNetIdentity<ApplicationUser>() below and add:
+        //      services.AddOptimizelyIdentity(useAsDefault: true);
+        // 2. If you run mixed-mode (useAsDefault: false, e.g. front-end visitor login),
+        //    tell the redirect manager to authorize against the Opti ID scheme:
+        //      services.AddRedirectManager(options =>
+        //      {
+        //          options.LangParam = RedirectKeeper.LangParam.Name;
+        //          options.AuthenticationSchemes = new[] { OptimizelyIdentityDefaults.SchemeName };
+        //      });
+        // 3. Create a "RedirectManagers" custom role in the Opti ID Admin Center,
+        //    or rely on CmsAdmins which Opti ID maps automatically.
 
         services
             .AddCmsAspNetIdentity<ApplicationUser>()
