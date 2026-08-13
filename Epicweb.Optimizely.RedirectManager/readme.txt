@@ -33,6 +33,16 @@ services.AddRedirectManager(
     enableChangeEvent: true,
     langParam: RedirectKeeper.LangParam.Name);//if you have complex language setup, change to Name or ThreeLetter, default is TwoLetter
 '
+or use the options overload for full control (roles, authentication schemes):
+
+    services.AddRedirectManager(options =>
+    {
+        options.AddQuickNavigator = true;
+        options.EnableChangeEvent = true;
+        options.LangParam = RedirectKeeper.LangParam.Name;
+        options.AllowedRoles = new[] { "RedirectManagers", "CmsAdmins", "WebAdmins", "Administrators" };//default
+        options.AuthenticationSchemes = Array.Empty<string>();//default, see Opti ID section below
+    });
 
 also
 '
@@ -50,6 +60,15 @@ CMS 13 / .NET 10 PACKAGE
 
 This package version targets Optimizely CMS 13 and .NET 10.
 If you are running Optimizely CMS 12, use package version 6.x instead.
+
+======================================
+NEW IN VERSION 7.1.0
+======================================
+
+- Feature: Opti ID support — new `AddRedirectManager(Action<RedirectManagerOptions>)` overload with configurable `AllowedRoles` and `AuthenticationSchemes` (for mixed-mode `AddOptimizelyIdentity(useAsDefault: false)` setups)
+- Change: `RedirectManagerController` now authorizes via the `episerver:redirectmanager` policy instead of hardcoded `[Authorize(Roles = ...)]`
+- Change: Menu item and Quick Navigator visibility now honor the configured `AllowedRoles` (default: RedirectManagers, CmsAdmins, WebAdmins, Administrators) — CmsAdmins-only users (Opti ID admins) now see the menu
+- Note: Under Opti ID, create a custom role `RedirectManagers` in the Opti ID Admin Center to grant access to non-admins
 
 ======================================
 NEW IN VERSION 7.0.0
